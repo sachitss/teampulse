@@ -82,8 +82,12 @@ export async function supabaseServer() {
 }
 
 export const getSession = cache(async (): Promise<Session | null> => {
+  // Always read the request cookies first. Besides being needed, this marks every page that
+  // checks the session as per-request: otherwise a build without sign-in settings would
+  // prerender these pages once and serve the same output to everyone.
+  const store = await cookies();
   if (devAuthEnabled()) {
-    const token = (await cookies()).get(DEV_COOKIE)?.value;
+    const token = store.get(DEV_COOKIE)?.value;
     if (token) {
       const s = await verifyDevToken(token);
       if (s) return s;

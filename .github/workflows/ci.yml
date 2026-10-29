@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PSQL: psql -h 127.0.0.1 -U postgres
+      PGPASSWORD: postgres
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Nepali calendar
+        run: npm run test:calendar
+      - name: Database — schema, RLS and rules
+        run: bash supabase/tests/run.sh
+      - name: Web — timer and timesheet logic
+        run: npm run test:web
+      - name: Web — type-check and production build
+        working-directory: web
+        run: npx tsc --noEmit && npx next build
+      - name: Web — end-to-end in a real browser
+        run: bash scripts/e2e.sh
+      - name: Server log on failure
+        if: failure()
+        run: tail -100 /tmp/tp-e2e-server.log || true

@@ -9,8 +9,8 @@ The build follows `docs/prompts/PEACE-TeamPulse-Lite-prompt.md` and, for the Win
 | Phase | What | State |
 |---|---|---|
 | **1. Foundation** | Database schema, Row Level Security, roles and MFA enforcement, BS calendar, rules seed, demo data | **Done, tested** (see `docs/phase-1-report.md`) |
-| 2. Time | Web app: sign-in, people, projects, tasks, timers, timesheets with monthly lock | Next |
-| 3. Agent | Windows agent: enrollment, policy, tray, screenshots, collectors, offline sync | |
+| **2. Time (web app)** | Installable web app for desktop and phone: sign-in with two-factor, consent, timer, timesheets with monthly lock, approvals, projects and tasks, people, settings | **Done, tested** (see `docs/phase-2-report.md`) |
+| 3. Agent | Windows agent: enrollment, policy, tray, screenshots, collectors, offline sync, plus the server endpoints it talks to | Next |
 | 4. Leave and holidays | Requests, approvals, government-list import, company holiday policy, accrual job | Database rules done in Phase 1 |
 | 5. Payroll | Calculation engine, payslips, SSF / TDS / bank exports, loan deductions, pay package screens, parallel run | Database guards, loans and pay scheme done in Phase 1 |
 | 6. Admin | Records, documents, checklists, compliance calendar, assets, announcements | Tables done in Phase 1 |
@@ -26,9 +26,33 @@ supabase/seed/          Reference data for every environment: BS calendar, leave
 supabase/demo/          Labelled demo data for dev/staging, plus one-command removal
 supabase/tests/         SQL tests that sign in as each role and exercise the real policies
 docs/                   Build prompts, accountant's checklist, monitoring notice template (EN + NE), phase reports
-web/                    Next.js app (Phase 2)
+web/                    Next.js 16 web app — installable on desktop, Android and iPhone (PWA)
+scripts/                End-to-end browser tests, notice-template generator
 agent/                  Windows agent, C#/.NET 8 (Phase 3)
 ```
+
+## The web app
+
+`web/` is a Next.js 16 app you install from the browser on Windows, macOS, Android and iPhone. See `docs/install-guide.md` for staff, and `docs/deploy-guide.md` to put it online with Supabase and Vercel.
+
+- **Every query runs as the signed-in person.** The server opens a transaction as the Postgres role `authenticated`, carrying that person's verified Supabase claims. The Row Level Security policies, and their tests, therefore decide what each person sees, exactly as they would through Supabase's own API.
+- **Sign-in:** Supabase Auth with email and password, plus an authenticator app (TOTP) for HR and admin. New employees are added by an admin and receive an invitation email.
+- **Privacy on devices:** the service worker caches only icons and build files, never pages or data. Nothing personal is stored on a phone or laptop.
+
+Run it locally against a database built from the migrations and demo data:
+
+```bash
+TP_TEST_DB=tp_web_dev bash supabase/tests/run.sh --no-tests
+psql -d tp_web_dev -f supabase/demo/demo_load.sql
+cat > web/.env.local <<ENV
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/tp_web_dev
+TP_DEV_AUTH=1
+TP_DEV_AUTH_SECRET=$(openssl rand -hex 32)
+ENV
+cd web && npx next dev          # open http://localhost:3000/dev-login
+```
+
+`/dev-login` lets you sign in as any demo person, with or without two-factor. It exists only in development: a production build returns 404 for it and rejects its tokens, whatever the environment says.
 
 ## Run the tests
 
@@ -36,7 +60,8 @@ Requires Node 22.18+ and a local PostgreSQL 15+ you can reach as a superuser.
 
 ```bash
 npm install
-npm test                 # calendar tests + full SQL suite on a throw-away database
+npm test                 # calendar + full SQL suite + web logic, on throw-away databases
+bash scripts/e2e.sh      # real browser (bundled Chromium): sign-in, consent, timer, approvals, phone layout, installability
 # or separately:
 npm run test:calendar
 PSQL="psql -h localhost -U postgres" npm run test:db
