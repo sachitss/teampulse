@@ -2,7 +2,7 @@
 
 TeamPulse is a web app you can **install**. Once installed, it opens in its own window with its own icon, like any other app. Updates arrive automatically; there is nothing to download from an app store.
 
-Open the address PEACE gave you (for example **https://teampulse.medtec24.com**) and open the invitation link you received (by email, or from the admin). It lets you choose your password once; after that, sign in with your work email and that password.
+Open the address PEACE gave you (for example **https://teampulse.medtec24.eu**) and open the invitation link you received (by email, or from the admin). It lets you choose your password once; after that, sign in with your work email and that password.
 
 ## Windows or Mac laptop
 
