@@ -306,6 +306,15 @@ test('phone: bottom tabs, no top nav, timer usable', async () => {
   await page.context().close();
 });
 
+test('privacy notice is public (needed by the app stores)', async () => {
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  const res = await page.goto(`${BASE}/privacy`);
+  assert.equal(res?.status(), 200);
+  await page.getByRole('heading', { name: 'TeamPulse privacy notice' }).waitFor();
+  await ctx.close();
+});
+
 test('installable: manifest, icons and service worker', async () => {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();

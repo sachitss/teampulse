@@ -30,6 +30,7 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
             <Link className="small" href="/forgot-password">Forgot password?</Link>
           </div>
         </ActionForm>
+        <p className="small muted" style={{ marginTop: 16 }}><Link href="/privacy">Privacy notice</Link></p>
       </div>
     </div>
   );
