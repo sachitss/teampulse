@@ -180,3 +180,30 @@ select '{
   "privacy_pause": { "employee_can_pause": true, "max_pause_minutes": 30 }
 }'::jsonb, 'Initial Lite policy'
 where not exists (select 1 from public.policies);
+
+-- -----------------------------------------------------------------------------
+-- Loans and advances — PEACE company policy (not law). Edit to match your policy.
+-- The loan_policy row is created by migration 0007 with status to_confirm.
+-- -----------------------------------------------------------------------------
+insert into public.loan_types (code, name_en, name_ne, max_months_of_basic, max_instalments, default_interest_bp, interest_method) values
+  ('salary_advance', 'Salary advance',  'तलब पेस्की',   1, 3,  0, 'none'),
+  ('personal_loan',  'Personal loan',   'व्यक्तिगत ऋण',  6, 24, 0, 'none'),
+  ('emergency_loan', 'Emergency loan',  'आपतकालीन ऋण',   3, 12, 0, 'none')
+on conflict (code) do nothing;
+
+-- -----------------------------------------------------------------------------
+-- Non-cash benefit types for the pay package overview (values are set per employee).
+-- -----------------------------------------------------------------------------
+insert into public.benefit_types (code, name_en, name_ne, taxable) values
+  ('group_medical_insurance',  'Group medical insurance',  'सामूहिक स्वास्थ्य बीमा', false),
+  ('group_accident_insurance', 'Group accident insurance', 'सामूहिक दुर्घटना बीमा', false),
+  ('lunch',                    'Lunch',                    'खाजा/खाना',           true),
+  ('mobile_phone',             'Mobile phone and plan',    'मोबाइल फोन',          true),
+  ('training',                 'Training and certification', 'तालिम',            false)
+on conflict (code) do nothing;
+
+-- Offboarding: recover outstanding loans in the final settlement.
+insert into public.checklist_template_items (template_id, position, title, owner_role, due_offset_days, action)
+select t.id, 7, 'Outstanding loans recovered in final settlement', 'hr', 0, 'final_settlement'
+  from public.checklist_templates t where t.kind = 'offboarding' and t.name = 'Standard offboarding'
+on conflict (template_id, position) do nothing;

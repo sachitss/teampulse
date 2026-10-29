@@ -11,8 +11,8 @@ The build follows `docs/prompts/PEACE-TeamPulse-Lite-prompt.md` and, for the Win
 | **1. Foundation** | Database schema, Row Level Security, roles and MFA enforcement, BS calendar, rules seed, demo data | **Done, tested** (see `docs/phase-1-report.md`) |
 | 2. Time | Web app: sign-in, people, projects, tasks, timers, timesheets with monthly lock | Next |
 | 3. Agent | Windows agent: enrollment, policy, tray, screenshots, collectors, offline sync | |
-| 4. Leave and holidays | Requests, approvals, holiday import, accrual job | Database rules done in Phase 1 |
-| 5. Payroll | Calculation engine, payslips, SSF / TDS / bank exports, parallel run | Database guards done in Phase 1 |
+| 4. Leave and holidays | Requests, approvals, government-list import, company holiday policy, accrual job | Database rules done in Phase 1 |
+| 5. Payroll | Calculation engine, payslips, SSF / TDS / bank exports, loan deductions, pay package screens, parallel run | Database guards, loans and pay scheme done in Phase 1 |
 | 6. Admin | Records, documents, checklists, compliance calendar, assets, announcements | Tables done in Phase 1 |
 | 7. Reports | Dashboards, email reports, retention jobs | |
 | 8. Pilot | 3 consenting employees, then all 25 | |
@@ -67,6 +67,9 @@ The SQL suite rebuilds a database from scratch every run. It uses a small shim (
 - Leave balances are the sum of an append-only ledger. They are never edited directly.
 - Payroll refuses to start if any rule or tax band is missing for the fiscal year. Approval is admin-only and freezes a snapshot of the exact rules used. Approved runs, their lines, and the salary versions they used can no longer change.
 - Money is integer paisa. Every BS date is filled from the calendar table by trigger, so it can never disagree with its AD date.
+- **Loans:** an admin approves (never their own). Repayment schedules are exact to the paisa (no interest, flat, or reducing balance). Payroll approval refuses loan deductions that don't match the schedule or exceed the policy cap, then posts the repayment. The balance comes from an append-only ledger.
+- **Pay scheme:** pay grades with ranges and standard allowances, non-cash benefits, and a package overview per person (monthly pay, SSF, festival allowance, benefits, annual cost to company). Employees see their own; managers see none.
+- **Holidays follow the company's policy, not the government list directly.** The government list is a reference; the company observes, skips or moves each holiday, and adds company-only and optional days. Only an admin-approved policy that meets the legal minimum (counted separately for women) gives days off.
 - The audit log is append-only for everyone, including the database owner. Encrypted fields and personal contact details are noted by name only, never by value.
 
 ## Deploying Phase 1 to Supabase

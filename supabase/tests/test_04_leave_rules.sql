@@ -76,6 +76,10 @@ reset role;
 -- Holidays: weekly holiday (Saturday) and scoped public holidays.
 insert into holiday_calendar (holiday_ad, name_en, scope) values ('2026-11-09', 'Test holiday', 'all'),
                                                                  ('2026-09-14', 'Test women holiday', 'female');
+-- Public holidays only count once the company's holiday policy for the year is approved.
+select tst.ok(not app.is_holiday_for(:'emp2', '2026-11-09'), 'no day off before the holiday policy is approved');
+select tst.claims(:'admin', true);
+insert into holiday_policies (fiscal_year, min_paid_holidays, extra_for_women, status) values ('2083/84', 1, 1, 'approved');
 select tst.ok(app.is_holiday_for(:'emp', '2026-10-31'), 'Saturday is a weekly holiday');
 select tst.ok(not app.is_holiday_for(:'emp', '2026-11-01'), 'Sunday is a working day in Nepal');
 select tst.ok(app.is_holiday_for(:'emp2', '2026-11-09'), 'all-staff holiday applies to everyone');

@@ -64,10 +64,32 @@ Confirm in particular: **is year-end encashment of excess sick leave correct for
 
 ## 7. Calendar and holidays
 
-- ☐ **Public holidays for the year:** the database holds only labelled **demo** examples. Replace them with the gazetted list (and any women-only or group holidays).
+- ☐ **Legal minimum for the holiday policy.** Seeded: **13** paid public holidays, plus **1 more for women**. Confirm against the Labour Act 2074. Admin approval is refused below this.
+- ☐ **Import the government (gazetted) list** for the fiscal year. It is a reference only: decide **observe / skip / move** for each holiday, add company-only days, list any optional holidays, set the optional quota, then ask the admin to approve the year's policy. **No public holiday counts as a day off until the policy is approved.**
+- ☐ The database holds only labelled **demo** holidays; remove them with the demo removal script.
 - ☐ **BS 2084 month lengths are provisional.** Baisakh–Asar 2084 fall inside FY 2083/84. When the official 2084 calendar is published (Nepal Panchanga Nirnayak Vikas Samiti), compare it with the provisional table. Any difference changes those payroll months. Seeded provisional 2084: 31 · 31 · 32 · 31 · 31 · 30 · 30 · 30 · 29 · 30 · 30 · 30.
 
-## 8. Before switching off the parallel-run badge
+## 8. Loans and advances (PEACE policy)
+
+| Setting | Seeded value | Confirm |
+|---|---|---|
+| Salary advance | up to 1 month of basic, 3 instalments, 0% | ☐ |
+| Personal loan | up to 6 months of basic, 24 instalments, 0% | ☐ |
+| Emergency loan | up to 3 months of basic, 12 instalments, 0% | ☐ |
+| Maximum loan deductions in a month | 50% of gross | ☐ |
+| Active loans per person | 1 | ☐ |
+| Service before borrowing / during probation | 6 months / not allowed | ☐ |
+| Recover outstanding balance at exit | yes | ☐ |
+
+- ☐ **Tax:** confirm whether an interest-free or low-interest employee loan creates a taxable benefit under the Income Tax Act 2058. If it does, a rule for valuing that benefit must be added before such loans are approved.
+
+## 9. Pay scheme and benefits
+
+- ☐ Enter PEACE's **pay grades**: ranges, annual increment, and standard allowances per grade. None are seeded except demo grades.
+- ☐ For each **benefit type** (group medical/accident insurance, lunch, phone, training), confirm whether it is **taxable** for the employee. The seeded flags are a first guess.
+- ☐ For each **allowance type**, confirm `part_of_basic` (counts for SSF) and `taxable`.
+
+## 10. Before switching off the parallel-run badge
 
 - ☐ At least two monthly runs match PEACE's current payroll to the paisa for every employee.
 - ☐ The SSF sheet and bank file totals equal the register totals.

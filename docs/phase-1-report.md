@@ -86,3 +86,36 @@ No activity evidence can be stored until two things are true:
 4. Web timer (start / break / resume / stop / switch task), idle resolution and manual entries with approval.
 5. Timesheets by BS month: submit → approve → lock.
 6. Agent endpoints (`/agent/v1/enroll`, `/token/refresh`, `/policy`, `/sessions`, `/heartbeat`, `/events`, `/screenshots`) so Phase 3 can start against a real backend.
+
+---
+
+## Addendum — 29 Oct 2026: loans, pay scheme, company holiday policy
+
+Added at PEACE's request, as migrations 0007–0009, with three new test files. The database is now **9 migrations, 70 tables, 146 access policies**. The test suite is **11 SQL files with 228 assertions, plus the demo round trip**, and everything passes.
+
+**Employee loans and salary advances**
+
+- Three loan types (salary advance, personal, emergency), each with a cap and an instalment limit.
+- A company loan policy: deduction cap 50% of gross, 1 active loan, 6 months' service, no loans during probation, recovery at exit.
+- Only an admin approves.
+- Schedules are exact to the paisa, with no interest, flat or reducing-balance interest.
+- HR can defer an instalment or record a manual repayment.
+- Payroll approval checks each loan deduction and posts it to an append-only ledger. A loan closes automatically at zero.
+- Loans are never visible to managers.
+
+**Pay scheme and package overview**
+
+- Versioned pay grades with salary ranges, annual increments and standard allowances.
+- Non-cash benefits.
+- A per-employee package view: monthly gross, SSF both sides, festival allowance, benefits, annual cash pay, annual cost to company, and position in the grade range. It warns when payroll rules are missing or unconfirmed.
+- A grade-level overview.
+
+**Company holiday policy**
+
+- The government's gazetted list is now a reference only.
+- For each government holiday, PEACE decides to observe it, skip it, or move it to another date.
+- PEACE can add company-only holidays and optional (floating) holidays with a yearly quota.
+- An admin approves one policy per fiscal year. Approval is refused while any government holiday is undecided, or if the policy falls below the legal minimum (seed: 13 days, plus 1 for women). Once approved, the year's calendar is frozen.
+- **Only holidays in an approved policy count as days off.**
+
+New items for the accountant are in `accountant-checklist.md` §7–9. These include whether an interest-free employee loan is a taxable benefit, and which benefits are taxable.

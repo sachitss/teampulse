@@ -87,22 +87,44 @@ begin
     ('demo_transport', '[DEMO] Transport allowance', false, true, true),
     ('demo_communication', '[DEMO] Communication allowance', false, true, true)
   on conflict (code) do nothing;
+  -- invented pay grades (salary scales)
+  insert into public.pay_grades (code, name, effective_from_ad, basic_min_paisa, basic_max_paisa, increment_paisa, sort_order, is_demo) values
+    ('DEMO-G1', '[DEMO] Grade 1 — Associate', date '2026-07-17', 3000000, 4500000, 100000, 10, true),
+    ('DEMO-G2', '[DEMO] Grade 2 — Engineer',  date '2026-07-17', 4500000, 6500000, 150000, 20, true),
+    ('DEMO-G3', '[DEMO] Grade 3 — Lead',      date '2026-07-17', 6500000, 9000000, 200000, 30, true);
   for i in 1..27 loop
-    insert into public.salary_records (user_id, effective_from_ad, basic_paisa, ssf_enrolled, reason, created_by)
-    values (ids[i], date '2026-07-17', (30000 + (i * 1750)) * 100, i <> 24, '[DEMO] Opening salary', hr_id);
+    insert into public.salary_records (user_id, effective_from_ad, basic_paisa, ssf_enrolled, reason, created_by, pay_grade_id)
+    values (ids[i], date '2026-07-17', (30000 + (i * 1750)) * 100, i <> 24, '[DEMO] Opening salary', hr_id,
+            (select id from public.pay_grades where code = case when 30000 + i * 1750 < 45000 then 'DEMO-G1'
+                                                                when 30000 + i * 1750 < 65000 then 'DEMO-G2' else 'DEMO-G3' end));
   end loop;
+  insert into public.employee_benefits (user_id, benefit_type_id, annual_value_paisa, start_ad, note)
+  select u, b.id, 1500000, date '2026-07-17', '[DEMO]'
+    from unnest(ids) u cross join public.benefit_types b where b.code = 'group_medical_insurance';
+  -- one pending loan request for the approval screen
+  insert into public.employee_loans (user_id, loan_type_id, principal_paisa, instalments, first_bs_year, first_bs_month, purpose)
+  select ids[5], id, 6000000, 12, 2083, 9, '[DEMO] Motorbike for site visits' from public.loan_types where code = 'personal_loan';
   insert into public.salary_allowances (salary_record_id, allowance_type_id, amount_paisa)
   select s.id, a.id, case a.code when 'demo_transport' then 300000 else 150000 end
     from public.salary_records s cross join public.allowance_types a
    where a.code like 'demo_%' and s.user_id = any (ids);
 
-  -- EXAMPLE holidays (not the gazetted list)
-  insert into public.holiday_calendar (holiday_ad, name_en, scope, is_demo) values
-    (date '2026-10-21', '[DEMO] Example festival holiday 1', 'all', true),
-    (date '2026-10-22', '[DEMO] Example festival holiday 2', 'all', true),
-    (date '2026-11-09', '[DEMO] Example festival holiday 3', 'all', true),
-    (date '2026-09-14', '[DEMO] Example women-only holiday', 'female', true),
-    (date '2027-04-14', '[DEMO] Example New Year holiday', 'all', true);
+  -- EXAMPLE government list (not the gazetted one) and the company's decisions on it
+  insert into public.government_holidays (holiday_ad, name_en, scope, gazette_ref, decision, moved_to_ad, decision_note, is_demo)
+  select d, '[DEMO] Example government holiday ' || n, 'all', '[DEMO] example list',
+         case when n = 14 then 'skip' when n = 13 then 'move' else 'observe' end::public.holiday_decision,
+         case when n = 13 then d + 1 end,
+         case when n = 14 then '[DEMO] Office open; replaced by company day' end, true
+    from (select n, date '2026-07-19' + n * 14 as d from generate_series(1, 14) n) x;   -- Sundays
+  insert into public.government_holidays (holiday_ad, name_en, scope, gazette_ref, decision, is_demo)
+  values (date '2026-09-14', '[DEMO] Example women-only holiday', 'female', '[DEMO] example list', 'observe', true);
+  insert into public.holiday_calendar (holiday_ad, name_en, source, is_demo) values
+    (date '2027-01-15', '[DEMO] PEACE foundation day', 'company', true);
+  insert into public.holiday_calendar (holiday_ad, name_en, is_optional, is_demo) values
+    (date '2027-02-10', '[DEMO] Optional holiday A', true, true),
+    (date '2027-03-10', '[DEMO] Optional holiday B', true, true);
+  insert into public.holiday_policies (fiscal_year, min_paid_holidays, extra_for_women, optional_quota, status, notes, is_demo)
+  values ('2083/84', 13, 1, 1, 'approved', '[DEMO] 13 government days observed + 1 company day + 1 optional', true);
 
   insert into public.assets (tag, model, serial, assigned_to, issued_on, is_demo)
   select '[DEMO]-LT-' || lpad(n::text, 3, '0'), 'Demo laptop', 'DEMO' || n, ids[n], date '2026-07-17', true

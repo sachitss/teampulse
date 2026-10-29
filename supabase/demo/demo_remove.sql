@@ -4,6 +4,10 @@
 -- =============================================================================
 begin;
 
+-- Unfreeze the demo year's calendar, then remove holidays (government rows cascade to the calendar).
+delete from public.holiday_policies    where is_demo;
+delete from public.government_holidays where is_demo;
+
 -- Children that reference demo users without ON DELETE CASCADE.
 delete from public.salary_allowances where salary_record_id in
   (select id from public.salary_records where user_id in (select id from public.profiles where is_demo));
@@ -14,6 +18,7 @@ delete from public.assets           where is_demo;
 delete from public.announcements    where is_demo;
 delete from public.holiday_calendar where is_demo;
 delete from public.allowance_types  where code like 'demo\_%';
+delete from public.pay_grades       where is_demo;
 
 -- Users (cascades to profiles and all per-user rows).
 delete from auth.users where id in (select id from public.profiles where is_demo);
