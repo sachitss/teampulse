@@ -6,6 +6,9 @@
 #   app          the TeamPulse web app (desktop, phone and tablet)
 #   backup       nightly database backup to ./backups (02:00 Nepal time), keeps 30 days
 #   cloudflared  Cloudflare Tunnel — the only way in from the internet; no router ports opened
+#   admin-tools  idle helper for the admin commands (create-admin, reset-link, reset-mfa, status):
+#                Container → teampulse-admin-tools-1 → Action → Open terminal → Create → Launch with
+#                command:  node db/manage.mjs status
 #
 # Nothing here publishes a port: people reach TeamPulse only through the tunnel (https).
 
@@ -69,6 +72,20 @@ services:
       db: { condition: service_healthy }
       migrate: { condition: service_completed_successfully }
     mem_limit: 768m
+    networks: [internal]
+
+  # Holds the database-owner login so the web app never has to. Does nothing until an admin
+  # opens a terminal in it; listens on no port.
+  admin-tools:
+    image: *app-image
+    restart: unless-stopped
+    command: ["sleep", "infinity"]
+    environment:
+      DATABASE_ADMIN_URL: postgresql://postgres:${DB_ADMIN_PASSWORD}@db:5432/teampulse
+      APP_BASE_URL: ${APP_BASE_URL}
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    mem_limit: 128m
     networks: [internal]
 
   backup:

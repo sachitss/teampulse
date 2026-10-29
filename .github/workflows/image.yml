@@ -50,8 +50,9 @@ jobs:
           services:
             migrate: { image: teampulse:ci }
             app: { image: teampulse:ci, ports: ['3000:3000'] }
+            admin-tools: { image: teampulse:ci }
           EOF
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d db migrate app backup
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d db migrate app backup admin-tools
           docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm migrate node db/manage.mjs load-demo
           docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm migrate node db/manage.mjs status
 
@@ -64,7 +65,7 @@ jobs:
           C="docker compose -f docker-compose.yml -f docker-compose.ci.yml"
           $C run --rm migrate | tee /tmp/m.txt; grep -q '0 new migrations' /tmp/m.txt
           ls backups/; ls backups/ | grep -q 'teampulse-.*\.dump$'
-          $C run --rm migrate node db/manage.mjs reset-link demo.admin@demo.invalid | grep -q '/set-password?token='
+          $C exec -T admin-tools node db/manage.mjs reset-link demo.admin@demo.invalid | grep -q '/set-password?token='
           # The app login cannot read sign-in secrets through a person's rights.
           $C exec -T db psql -U postgres -d teampulse -tAc "select has_table_privilege('authenticated', 'auth.credentials', 'select')" | grep -qx f
 

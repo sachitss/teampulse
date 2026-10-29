@@ -78,7 +78,7 @@ If the project page shows "permission denied" on `postgres`: File Station → `d
 
 ## 5. Create the first admin
 
-**Container Manager → Container → `teampulse-app-1` → Details → Terminal → Create**. This opens a command line inside the app. Then run:
+**Container Manager → Container → `teampulse-admin-tools-1` → Action → Open terminal → Create ▾ → Launch with command**, and enter:
 
 ```sh
 node db/manage.mjs create-admin director@peace.com.np "Your Full Name"
@@ -121,11 +121,11 @@ For example onto a new or repaired NAS:
 
 1. Do steps 1–4 with the **same `.env`**. Then stop the `teampulse-app-1` container.
 2. Put the chosen `teampulse-YYYYMMDD-HHMM.dump` into `docker/teampulse/backups`, from Hyper Backup or the USB disk.
-3. Container → `teampulse-backup-1` → Details → Terminal → Create, then run:
+3. Container → `teampulse-backup-1` → Action → Open terminal → Create ▾ → Launch with command, then enter:
    ```sh
    pg_restore --clean --if-exists --no-owner -d teampulse /backups/teampulse-YYYYMMDD-HHMM.dump
    ```
-4. Start `teampulse-app-1` again. In its terminal run `node db/manage.mjs migrate`, which brings an older backup up to the current version and resets the app's database password.
+4. Start `teampulse-app-1` again. In `teampulse-admin-tools-1` (Open terminal → Launch with command) run `node db/manage.mjs migrate`, which brings an older backup up to the current version and resets the app's database password.
 
 ## 8. Updates
 
@@ -137,7 +137,7 @@ To stay on a tested version, set `TEAMPULSE_VERSION=2026.10.29` (the date tag) i
 
 ## 9. Help commands
 
-All run in **Container → `teampulse-app-1` → Details → Terminal → Create**:
+Each one: **Container → `teampulse-admin-tools-1` → Action → Open terminal → Create ▾ → Launch with command**, then type the command. The output shows in the terminal window:
 
 | Command | When |
 |---|---|
