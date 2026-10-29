@@ -1,0 +1,14 @@
+{
+  "name": "teampulse",
+  "private": true,
+  "description": "TeamPulse Lite + HR for PEACE Consultancy — time, activity, leave, payroll and administration for a 25-person team in Nepal.",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "test": "npm run test:calendar && npm run test:db",
+    "test:calendar": "npm test --workspace @teampulse/bs-calendar",
+    "test:db": "bash supabase/tests/run.sh",
+    "db:build": "bash supabase/tests/run.sh --no-tests",
+    "calendar:sql": "npm run sql --workspace @teampulse/bs-calendar"
+  },
+  "engines": { "node": ">=22.18" }
+}
