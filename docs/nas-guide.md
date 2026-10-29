@@ -1,6 +1,6 @@
 # Running TeamPulse on PEACE's Synology NAS
 
-TeamPulse runs entirely on the office **Synology DS918+**. No Supabase or Vercel account is needed. Staff reach it from anywhere at an https address such as `https://teampulse.peace.com.np`, through a **Cloudflare Tunnel**. No ports are opened on the office router.
+TeamPulse runs entirely on the office **Synology DS918+**. No Supabase or Vercel account is needed. Staff reach it from anywhere at an https address such as `https://teampulse.medtec24.com`, through a **Cloudflare Tunnel**. No ports are opened on the office router.
 
 ```
  Laptops / phones ──https──▶ Cloudflare ──tunnel (outbound from NAS)──▶ cloudflared ─▶ app ─▶ PostgreSQL
@@ -23,7 +23,7 @@ Expect about 1 hour for the first setup.
 
 - **DSM 7.2 or newer** with **Container Manager**. Check the DSM version under Control Panel → Info Center. The DS918+ is a 2018 model. Look it up on Synology's [product support status](https://www.synology.com/en-global/products/status) page and keep DSM updated (Control Panel → Update & Restore).
 - **RAM:** 4 GB is enough for TeamPulse with 25 people. **8 GB** is recommended if the NAS also runs other things such as Surveillance Station or Photos. The DS918+ takes one extra SO-DIMM (DDR3L-1866); Synology's own module is the D3NS1866L-4G.
-- **A domain on Cloudflare.** Cloudflare's free plan is enough. If PEACE already has a domain such as `peace.com.np`, you can move its DNS to Cloudflare (a `.com.np` domain's name servers are changed at register.com.np), or buy a cheap separate domain just for TeamPulse.
+- **The domain `medtec24.com` on Cloudflare** (free plan), so TeamPulse lives at `https://teampulse.medtec24.com`. Adding it means pointing the domain's **name servers** to Cloudflare. After that, Cloudflare answers for *every* name under medtec24.com, including the website and email. Cloudflare copies the existing records when you add the domain. **Compare them with the current DNS before switching**, especially the `MX`, SPF/DKIM `TXT` and website records, or email and the website can stop working. Only `teampulse.medtec24.com` goes through the tunnel; everything else stays as it is.
 - **A UPS** is strongly recommended. Connect it by USB and turn on Control Panel → Hardware & Power → UPS → **Enable UPS support** (safe shutdown). A sudden power cut is the most common way to damage a database.
 - The office line already has a real public IP (we checked: the router's PPPoE address matches what the internet sees). The tunnel doesn't need it, and keeps working if the address changes.
 
@@ -54,11 +54,11 @@ Rename `.env.example` to **`.env`** (File Station → right-click → Rename) an
 1. Go to https://one.dash.cloudflare.com → **Networks → Tunnels → Create a tunnel** → **Cloudflared** → name it `peace-nas`.
 2. On "Install and run a connector", choose **Docker** and copy the long token after `--token`. Put it in `.env` as **`TUNNEL_TOKEN=`**. Don't run the command it shows; Container Manager does that.
 3. **Public hostname:**
-   - subdomain `teampulse`, domain `peace.com.np` (yours)
+   - subdomain `teampulse`, domain `medtec24.com`
    - Service **HTTP**, URL **`app:3000`**
    - Save.
 
-   `APP_BASE_URL` in `.env` must be exactly this address with `https://`, for example `https://teampulse.peace.com.np`.
+   `APP_BASE_URL` in `.env` must be exactly this address with `https://`, for example `https://teampulse.medtec24.com`.
 4. Recommended: **SSL/TLS → Edge Certificates → Always Use HTTPS: On** and **Minimum TLS version 1.2**.
 
 Optional extra lock: **Zero Trust → Access → Applications** can require a one-time email code from @peace.com.np addresses before the sign-in page even shows. This is a second gate in front of TeamPulse's own password and two-factor. It adds a step for staff every 30 days.
