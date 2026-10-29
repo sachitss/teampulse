@@ -1,0 +1,122 @@
+name: Mobile apps
+
+# Builds the TeamPulse app for Android and iPhone on GitHub's servers.
+#
+# Android: always builds. With the upload-key secrets it produces a signed .apk (share directly)
+#          and .aab (for Google Play); without them a debug .apk. Download from the run's "Artifacts".
+# iPhone:  always compiles. With the App Store Connect API key secrets it signs the app and uploads
+#          it to TestFlight (run this workflow by hand: Actions → Mobile apps → Run workflow → iOS upload).
+#
+# Secrets (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD           (upload key; created once)
+#   APPLE_TEAM_ID, ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8          (Apple; see docs/mobile-guide.md)
+
+on:
+  push:
+    branches: [main]
+    paths: ['mobile/**', '.github/workflows/mobile.yml']
+  pull_request:
+    paths: ['mobile/**', '.github/workflows/mobile.yml']
+  workflow_dispatch:
+    inputs:
+      ios_upload:
+        description: Upload the iPhone build to TestFlight
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  VERSION_NAME: 1.0.${{ github.run_number }}
+  BUILD_NUMBER: ${{ github.run_number }}
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: mobile } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: mobile/package-lock.json }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - run: npm ci
+      - run: npx cap sync android
+      - name: Build
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          TP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          TP_VERSION_CODE: ${{ github.run_number }}
+          TP_VERSION_NAME: ${{ env.VERSION_NAME }}
+        run: |
+          cd android
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            export TP_KEYSTORE_FILE="$RUNNER_TEMP/upload.jks"
+            ./gradlew --no-daemon assembleRelease bundleRelease
+            mkdir -p ../out
+            cp app/build/outputs/apk/release/app-release.apk ../out/TeamPulse-$TP_VERSION_NAME.apk
+            cp app/build/outputs/bundle/release/app-release.aab ../out/TeamPulse-$TP_VERSION_NAME.aab
+          else
+            echo "::warning::No upload key secrets — building an unsigned debug APK only."
+            ./gradlew --no-daemon assembleDebug
+            mkdir -p ../out && cp app/build/outputs/apk/debug/app-debug.apk ../out/TeamPulse-$TP_VERSION_NAME-debug.apk
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TeamPulse-android-${{ env.VERSION_NAME }}
+          path: mobile/out/*
+          retention-days: 90
+
+  ios:
+    runs-on: macos-latest
+    defaults: { run: { working-directory: mobile } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: mobile/package-lock.json }
+      - run: npm ci
+      - run: npx cap sync ios
+      - name: Compile check (simulator, unsigned)
+        working-directory: mobile/ios/App
+        run: |
+          xcodebuild -project App.xcodeproj -scheme App -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build | tail -20
+
+      - name: Sign, archive and upload to TestFlight
+        if: github.event_name == 'workflow_dispatch' && inputs.ios_upload
+        working-directory: mobile/ios/App
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          for v in TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8; do
+            [ -n "${!v}" ] || { echo "::error::Secret for $v is missing — see docs/mobile-guide.md"; exit 1; }
+          done
+          KEY="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"; printf '%s' "$ASC_KEY_P8" > "$KEY"
+          AUTH="-allowProvisioningUpdates -authenticationKeyPath $KEY -authenticationKeyID $ASC_KEY_ID -authenticationKeyIssuerID $ASC_ISSUER_ID"
+          xcodebuild -project App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            DEVELOPMENT_TEAM=$TEAM_ID CODE_SIGN_STYLE=Automatic \
+            CURRENT_PROJECT_VERSION=$BUILD_NUMBER MARKETING_VERSION=1.0.0 \
+            $AUTH archive | tail -20
+          cat > "$RUNNER_TEMP/export.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          EOF
+          # destination=upload sends the signed build straight to App Store Connect / TestFlight.
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/export.plist" -exportPath "$RUNNER_TEMP/export" $AUTH | tail -20
+          rm -f "$KEY"
+          echo "Uploaded build $BUILD_NUMBER — it appears in App Store Connect → TestFlight after Apple's processing (10–30 min)."

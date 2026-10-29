@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">TeamPulse</string>
+    <string name="title_activity_main">TeamPulse</string>
+    <string name="package_name">eu.medtec24.teampulse</string>
+    <string name="custom_url_scheme">eu.medtec24.teampulse</string>
+</resources>

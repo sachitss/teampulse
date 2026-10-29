@@ -1,0 +1,31 @@
+{
+  "appId": "eu.medtec24.teampulse",
+  "appName": "TeamPulse",
+  "webDir": "www",
+  "server": {
+    "url": "https://teampulse.medtec24.eu",
+    "errorPath": "offline.html",
+    "cleartext": false
+  },
+  "ios": {
+    "contentInset": "never",
+    "preferredContentMode": "mobile"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "launchAutoHide": true,
+      "backgroundColor": "#0f5257",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#0f5257"
+    }
+  }
+}
