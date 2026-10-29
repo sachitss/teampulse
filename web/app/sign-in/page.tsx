@@ -1,24 +1,35 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { getSession, devAuthEnabled, supabaseConfigured } from '@/lib/auth';
-import { SignInForm } from '@/components/sign-in-form';
+import { getSession } from '@/lib/auth';
+import { ActionForm, Submit } from '@/components/action-form';
+import { signInAction } from './actions';
 
 export const metadata = { title: 'Sign in' };
 
-export default async function SignIn() {
+export default async function SignIn({ searchParams }: { searchParams: Promise<{ done?: string }> }) {
   if (await getSession()) redirect('/today');
+  const { done } = await searchParams;
   return (
     <div className="center-page">
       <div className="card">
         <img className="logo-big" src="/icons/icon-192.png" alt="" />
         <h1>TeamPulse</h1>
         <p className="muted">PEACE Consultancy</p>
-        {supabaseConfigured()
-          ? <SignInForm url={process.env.NEXT_PUBLIC_SUPABASE_URL!} anonKey={process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!} />
-          : <p className="notice warn">Sign-in is not configured yet. Set the Supabase variables in the environment.</p>}
-        {devAuthEnabled() && (
-          <p className="small"><Link href="/dev-login">Developer sign-in (local only) →</Link></p>
-        )}
+        {done === 'password' && <p className="notice ok" role="status">Password saved. Sign in with it now.</p>}
+        <ActionForm action={signInAction}>
+          <div className="field">
+            <label htmlFor="email">Work email</label>
+            <input id="email" name="email" type="email" autoComplete="username" required />
+          </div>
+          <div className="field">
+            <label htmlFor="password">Password</label>
+            <input id="password" name="password" type="password" autoComplete="current-password" required />
+          </div>
+          <div className="spread">
+            <Submit testId="sign-in">Sign in</Submit>
+            <Link className="small" href="/forgot-password">Forgot password?</Link>
+          </div>
+        </ActionForm>
       </div>
     </div>
   );

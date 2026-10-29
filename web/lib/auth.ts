@@ -1,108 +1,74 @@
-// Who is signed in.
+// Who is signed in — TeamPulse's own sign-in (no outside service).
 //
-// Production: Supabase Auth. The session lives in Supabase's cookies; the server
-// verifies the access token with supabase.auth.getClaims() (signature checked
-// against the project's keys) and uses those claims — sub and aal (MFA level).
-//
-// Local development and automated tests only: a "dev sign-in" that mints a token
-// signed with TP_DEV_AUTH_SECRET. It is impossible to enable in a production build
-// (NODE_ENV=production), whatever the environment variables say.
+// The browser holds one random cookie (tp_session). The database stores only its SHA-256,
+// with the person, the level of the sign-in (aal1 = password, aal2 = password + authenticator
+// code) and when it expires. Every page looks the cookie up; the database's Row Level
+// Security then works with the same claims it always did (sub + aal).
 import 'server-only';
 import { cache } from 'react';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { jwtVerify, SignJWT } from 'jose';
-import { createServerClient } from '@supabase/ssr';
-import type { Claims } from './db.ts';
+import { asSystem, type Claims } from './db.ts';
+import { createSession, findSession, revokeSession, POLICY } from './signin-core.ts';
 
-export const DEV_COOKIE = 'tp_dev_session';
+export const SESSION_COOKIE = 'tp_session';
 
 export interface Session {
+  id: string;
   userId: string;
   aal: 'aal1' | 'aal2';
-  email?: string;
+  email: string;
   claims: Claims;
-  via: 'supabase' | 'dev';
 }
 
-export function devAuthEnabled(): boolean {
-  return process.env.NODE_ENV !== 'production'
-    && process.env.TP_DEV_AUTH === '1'
-    && (process.env.TP_DEV_AUTH_SECRET ?? '').length >= 32;
+/** Cookies are marked Secure whenever the site is served over https (always, through the tunnel). */
+function secureCookies(): boolean {
+  return (process.env.APP_BASE_URL ?? '').startsWith('https://');
 }
 
-export function supabaseConfigured(): boolean {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-}
-
-function devSecret(): Uint8Array {
-  if (!devAuthEnabled()) throw new Error('Dev sign-in is disabled');
-  return new TextEncoder().encode(process.env.TP_DEV_AUTH_SECRET);
-}
-
-function toSession(sub: string, aal: unknown, email: unknown, via: Session['via']): Session {
-  const level = aal === 'aal2' ? 'aal2' : 'aal1';
-  return {
-    userId: sub, aal: level, email: typeof email === 'string' ? email : undefined, via,
-    claims: { sub, aal: level, role: 'authenticated', email: typeof email === 'string' ? email : undefined },
-  };
-}
-
-export async function mintDevToken(userId: string, email: string, mfa: boolean): Promise<string> {
-  return new SignJWT({ aal: mfa ? 'aal2' : 'aal1', role: 'authenticated', email, tp_dev: true })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setSubject(userId)
-    .setIssuedAt()
-    .setExpirationTime('8h')
-    .sign(devSecret());
-}
-
-export async function verifyDevToken(token: string): Promise<Session | null> {
-  if (!devAuthEnabled()) return null;
-  try {
-    const { payload } = await jwtVerify(token, devSecret(), { algorithms: ['HS256'] });
-    if (!payload.sub || payload.tp_dev !== true) return null;
-    return toSession(payload.sub, payload.aal, payload.email, 'dev');
-  } catch {
-    return null;
-  }
-}
-
-/** Supabase server client bound to this request's cookies (also refreshes the session). */
-export async function supabaseServer() {
-  const store = await cookies();
-  return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-    cookies: {
-      getAll: () => store.getAll(),
-      setAll: (list) => {
-        try { list.forEach(({ name, value, options }) => store.set(name, value, options)); } catch { /* read-only in Server Components */ }
-      },
-    },
-  });
+export async function clientMeta(): Promise<{ ip?: string; userAgent?: string }> {
+  const h = await headers();
+  const ip = h.get('cf-connecting-ip') ?? h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined;
+  return { ip, userAgent: h.get('user-agent') ?? undefined };
 }
 
 export const getSession = cache(async (): Promise<Session | null> => {
-  // Always read the request cookies first. Besides being needed, this marks every page that
-  // checks the session as per-request: otherwise a build without sign-in settings would
-  // prerender these pages once and serve the same output to everyone.
-  const store = await cookies();
-  if (devAuthEnabled()) {
-    const token = store.get(DEV_COOKIE)?.value;
-    if (token) {
-      const s = await verifyDevToken(token);
-      if (s) return s;
-    }
-  }
-  if (!supabaseConfigured()) return null;
-  const sb = await supabaseServer();
-  const { data, error } = await sb.auth.getClaims();
-  if (error || !data?.claims?.sub) return null;
-  const c = data.claims as Record<string, unknown>;
-  return toSession(String(c.sub), c.aal, c.email, 'supabase');
+  // Reading the cookies also marks every page that checks the session as per-request,
+  // so nothing personal is ever prerendered.
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (!token) return null;
+  const s = await asSystem((db) => findSession(db, token));
+  if (!s) return null;
+  return {
+    id: s.id, userId: s.user_id, aal: s.aal, email: s.email,
+    claims: { sub: s.user_id, aal: s.aal, role: 'authenticated', email: s.email },
+  };
 });
 
 export async function requireSession(): Promise<Session> {
   const s = await getSession();
   if (!s) redirect('/sign-in');
   return s;
+}
+
+/** Start a new session (and end the one this browser had, if any). */
+export async function startSession(userId: string, aal: 'aal1' | 'aal2'): Promise<void> {
+  const store = await cookies();
+  const old = store.get(SESSION_COOKIE)?.value;
+  const meta = await clientMeta();
+  const token = await asSystem(async (db) => {
+    if (old) await revokeSession(db, old);
+    return createSession(db, userId, aal, meta);
+  });
+  store.set(SESSION_COOKIE, token, {
+    httpOnly: true, sameSite: 'lax', path: '/', secure: secureCookies(),
+    maxAge: aal === 'aal2' ? POLICY.mfaSessionHours * 3600 : POLICY.sessionDays * 86400,
+  });
+}
+
+export async function endSession(): Promise<void> {
+  const store = await cookies();
+  const token = store.get(SESSION_COOKIE)?.value;
+  if (token) await asSystem((db) => revokeSession(db, token));
+  store.delete(SESSION_COOKIE);
 }

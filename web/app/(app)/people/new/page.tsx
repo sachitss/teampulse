@@ -16,11 +16,11 @@ export default async function NewPerson() {
     <>
       <p className="small"><Link href="/people">← People</Link></p>
       <h1>Add employee</h1>
-      <p className="muted">They will get an email invitation to set a password. Salary, PAN and bank details are added by HR afterwards.</p>
+      <p className="muted">They get a single-use invitation link to choose their password — by email, or from you if email is not set up. Salary, PAN and bank details are added by HR afterwards.</p>
       <div className="card">
         <ActionForm action={createPersonAction}>
           <PersonFields managers={managers} teams={teams} canAdmin isNew />
-          <Submit testId="create-person">Add and send invitation</Submit>
+          <Submit testId="create-person">Add employee</Submit>
         </ActionForm>
       </div>
     </>

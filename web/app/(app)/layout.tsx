@@ -27,7 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {me.needsMfa && (
           <p className="notice warn">
             You signed in without two-factor, so your {me.role === 'admin' ? 'admin' : 'HR'} rights are switched off for this session.{' '}
-            {me.session.via === 'supabase' ? <Link href="/mfa">Verify with your authenticator app</Link> : 'Sign in again with 2FA.'}
+            <Link href="/mfa" data-testid="go-mfa">Verify with your authenticator app</Link>
           </p>
         )}
         {children}

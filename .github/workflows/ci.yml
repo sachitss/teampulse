@@ -31,7 +31,7 @@ jobs:
         run: npm run test:calendar
       - name: Database — schema, RLS and rules
         run: bash supabase/tests/run.sh
-      - name: Web — timer and timesheet logic
+      - name: Web — sign-in, timer and timesheet logic
         run: npm run test:web
       - name: Web — type-check and production build
         working-directory: web

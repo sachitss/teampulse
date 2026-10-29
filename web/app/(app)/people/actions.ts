@@ -4,7 +4,8 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { requireMe, db, isAdmin, isHr } from '@/lib/me';
 import { friendlyError } from '@/lib/db';
-import { createLoginAccount, removeLoginAccount } from '@/lib/accounts';
+import { createLoginAccount, removeLoginAccount, sendSignInLink, adminResetMfa, adminUnlock } from '@/lib/accounts';
+import { mailConfigured } from '@/lib/mail';
 import type { ActionResult } from '@/components/action-form';
 
 const optUuid = z.string().uuid().or(z.literal('')).transform((v) => v || null);
@@ -32,8 +33,8 @@ export async function createPersonAction(_: ActionResult, f: FormData): Promise<
   const exists = await db(me, (d) => d.one(`select 1 from profiles where lower(email) = $1`, [email.data]));
   if (exists) return { error: 'Someone with that email address already exists.' };
 
-  let account: { userId: string; invited: boolean };
-  try { account = await createLoginAccount(email.data); } catch (e) { return { error: (e as Error).message }; }
+  let account: { userId: string };
+  try { account = { userId: await createLoginAccount(email.data) }; } catch (e) { return { error: (e as Error).message }; }
   try {
     await db(me, async (d) => {
       const v = p.data;
@@ -55,8 +56,10 @@ export async function createPersonAction(_: ActionResult, f: FormData): Promise<
     await removeLoginAccount(account.userId).catch(() => {});
     return { error: friendlyError(e) };
   }
+  // Invitation: emailed if email is set up; otherwise the admin gets the link on the next page.
+  const emailed = mailConfigured() && (await sendSignInLink(account.userId, 'invite', me.id).catch(() => ({ emailed: false }))).emailed;
   revalidatePath('/people');
-  redirect(`/people/${account.userId}`);
+  redirect(`/people/${account.userId}?invite=${emailed ? 'emailed' : 'pending'}`);
 }
 
 export async function updatePersonAction(_: ActionResult, f: FormData): Promise<ActionResult> {
@@ -81,5 +84,30 @@ export async function updatePersonAction(_: ActionResult, f: FormData): Promise<
     revalidatePath(`/people/${id.data}`);
     revalidatePath('/people');
     return { ok: 'Saved.' };
+  } catch (e) { return { error: friendlyError(e) }; }
+}
+
+// ---------------------------------------------------------------------------
+// Sign-in help (admin only, with two-factor)
+// ---------------------------------------------------------------------------
+export async function signInHelpAction(_: ActionResult, f: FormData): Promise<ActionResult> {
+  const me = await requireMe();
+  if (!isAdmin(me)) return { error: 'Only an admin (signed in with two-factor) can do this.' };
+  const id = z.string().uuid().safeParse(f.get('id'));
+  const what = z.enum(['invite', 'reset', 'mfa', 'unlock']).safeParse(f.get('what'));
+  if (!id.success || !what.success) return { error: 'Please try again.' };
+  // The person must be someone the admin can see (RLS check as the admin).
+  const p = await db(me, (d) => d.one<{ email: string }>(`select email from profiles where id = $1`, [id.data]));
+  if (!p) return { error: 'Employee not found.' };
+  try {
+    if (what.data === 'mfa') {
+      if (id.data === me.id) return { error: 'Ask another admin to reset your own two-factor.' };
+      await adminResetMfa(id.data);
+      return { ok: 'Two-factor removed. They will be asked to set it up again at their next sign-in.' };
+    }
+    if (what.data === 'unlock') { await adminUnlock(id.data); return { ok: 'Unlocked. They can try signing in again.' }; }
+    const r = await sendSignInLink(id.data, what.data, me.id);
+    if (r.emailed) return { ok: `Link emailed to ${p.email}.` };
+    return { ok: 'Email is not set up, so give them this link yourself (in person or by a private message). It works once.', link: r.link };
   } catch (e) { return { error: friendlyError(e) }; }
 }

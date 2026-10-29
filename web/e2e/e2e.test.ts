@@ -4,6 +4,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import chromium from '@sparticuz/chromium';
 import { chromium as pw, type Browser, type Page } from 'playwright-core';
+import { totp, totpCounter } from '../lib/crypto.ts';
 
 // localhost, not 127.0.0.1: Next.js 16 blocks dev resources for other origins.
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3200';
@@ -17,14 +18,40 @@ before(async () => {
 });
 after(async () => { await browser?.close(); });
 
-async function signIn(email: string, mfa = true, viewport = { width: 1280, height: 860 }): Promise<Page> {
+const PASSWORD = 'demo-password-CHANGE-ME';
+// Authenticator app stand-in: remembers each person's two-factor secret, as their phone would.
+const phones = new Map<string, { secret: string; last: number }>();
+
+async function codeFor(email: string): Promise<string> {
+  const p = phones.get(email)!;
+  // A code can be used only once; wait for the next 30-second step if this one was used.
+  while (totpCounter() <= p.last) await new Promise((r) => setTimeout(r, 1000));
+  p.last = totpCounter();
+  return totp(p.secret);
+}
+
+/** Real sign-in through the UI. mfa=true completes two-factor (setting it up the first time). */
+async function signIn(email: string, mfa = true, viewport = { width: 1280, height: 860 }, password = PASSWORD): Promise<Page> {
   const ctx = await browser.newContext({ viewport, serviceWorkers: 'block' });
   const page = await ctx.newPage();
-  await page.goto(`${BASE}/dev-login`);
-  const row = page.locator('tr', { hasText: email });
-  await row.getByRole('button', { name: mfa ? 'Sign in (with 2FA)' : 'without 2FA' }).click();
-  // Sign-in goes to /today; the app may then send the person on to /consent. Wait until settled.
-  await page.locator('[data-testid^="timer-"], [data-testid="notice-en"]').first().waitFor();
+  await page.goto(`${BASE}/sign-in`);
+  await page.locator('#email').fill(email);
+  await page.locator('#password').fill(password);
+  await page.getByTestId('sign-in').click();
+  // HR/admin (and anyone with two-factor) are taken to /mfa; everyone else to /today (or /consent).
+  await page.locator('[data-testid^="timer-"], [data-testid="notice-en"], [data-testid="verify-mfa"]').first().waitFor();
+  if (page.url().endsWith('/mfa')) {
+    if (!mfa) {
+      await page.getByRole('link', { name: 'Not now' }).click();
+    } else {
+      if (await page.getByTestId('mfa-secret').count()) {
+        phones.set(email, { secret: (await page.getByTestId('mfa-secret').innerText()).replace(/\s/g, ''), last: -1 });
+      }
+      await page.locator('#code').fill(await codeFor(email));
+      await page.getByTestId('verify-mfa').click();
+    }
+    await page.locator('[data-testid^="timer-"], [data-testid="notice-en"]').first().waitFor();
+  }
   return page;
 }
 
@@ -176,9 +203,14 @@ test('admin adds an employee; HR with two-factor sees them', async () => {
   await page.locator('#email').fill('new.starter@demo.invalid');
   await page.locator('#job_title').fill('BIM Modeller');
   await page.getByTestId('create-person').click();
-  await page.waitForURL(/\/people\/[0-9a-f-]{36}$/);
+  await page.waitForURL(/\/people\/[0-9a-f-]{36}\?invite=pending$/);
   await page.getByRole('heading', { name: 'E2E New Starter' }).waitFor();
   await page.getByText(/Not consented yet/).waitFor();
+  // No email server in tests: the admin creates the invitation link and hands it over.
+  await page.getByText(/Email is not set up/).waitFor();
+  await page.getByTestId('invite-link').click();
+  const link = await page.getByTestId('one-time-link').inputValue();
+  assert.match(link, /\/set-password\?token=/);
   // Duplicate email refused.
   await page.goto(`${BASE}/people/new`);
   await page.locator('#full_name').fill('Again');
@@ -192,6 +224,56 @@ test('admin adds an employee; HR with two-factor sees them', async () => {
   await hr.goto(`${BASE}/people`);
   await hr.getByRole('link', { name: 'E2E New Starter' }).waitFor();
   await hr.context().close();
+
+  // The new starter opens the link, chooses a password, signs in and is asked to consent.
+  const ctx = await browser.newContext({ serviceWorkers: 'block' });
+  const starter = await ctx.newPage();
+  await starter.goto(link.replace(/^https?:\/\/[^/]+/, BASE));
+  await starter.getByRole('heading', { name: 'Welcome to TeamPulse' }).waitFor();
+  await starter.locator('#pw').fill('aaaaaaaaaaaaaaaa');
+  await starter.locator('#pw2').fill('aaaaaaaaaaaaaaaa');
+  await starter.getByTestId('save-password').click();
+  await starter.getByRole('alert').getByText(/less predictable/).waitFor();
+  await starter.locator('#pw').fill('mountain view from Nagarkot');
+  await starter.locator('#pw2').fill('mountain view from Nagarkot');
+  await starter.getByTestId('save-password').click();
+  await starter.waitForURL(/\/sign-in\?done=password$/);
+  // The link works once only.
+  await starter.goto(link.replace(/^https?:\/\/[^/]+/, BASE));
+  await starter.getByRole('heading', { name: 'Link expired' }).waitFor();
+  await ctx.close();
+  const signedIn = await signIn('new.starter@demo.invalid', false, undefined, 'mountain view from Nagarkot');
+  assert.equal(await signedIn.getByTestId('notice-en').count(), 1, 'new starter must consent first');
+  await signedIn.context().close();
+});
+
+test('sign-in refuses a wrong password, and sign-out ends the session', async () => {
+  const ctx = await browser.newContext({ serviceWorkers: 'block' });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/sign-in`);
+  await page.locator('#email').fill('demo.employee05@demo.invalid');
+  await page.locator('#password').fill('not-the-password');
+  await page.getByTestId('sign-in').click();
+  await page.getByRole('alert').getByText('Email or password is not correct.').waitFor();
+  await page.goto(`${BASE}/today`);
+  await page.waitForURL(/\/sign-in$/);
+  await ctx.close();
+
+  const p2 = await signIn('demo.employee05@demo.invalid', false);
+  const cookie = (await p2.context().cookies()).find((c) => c.name === 'tp_session');
+  assert.ok(cookie?.httpOnly, 'session cookie is httpOnly');
+  assert.equal(cookie?.sameSite, 'Lax');
+  await consentIfAsked(p2);
+  await p2.getByRole('button', { name: 'Sign out' }).click();
+  await p2.waitForURL(/\/sign-in$/);
+  // The old cookie no longer works even if replayed.
+  const replay = await browser.newContext({ serviceWorkers: 'block' });
+  await replay.addCookies([{ ...cookie!, expires: -1 }]);
+  const r = await replay.newPage();
+  await r.goto(`${BASE}/today`);
+  await r.waitForURL(/\/sign-in$/);
+  await replay.close();
+  await p2.context().close();
 });
 
 test('manager creates a project and a task', async () => {

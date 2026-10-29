@@ -11,12 +11,11 @@
     "test": "node --test --experimental-test-isolation=none test/*.test.ts"
   },
   "dependencies": {
-    "@supabase/ssr": "0.12.7",
-    "@supabase/supabase-js": "2.118.0",
     "@teampulse/bs-calendar": "0.1.0",
-    "jose": "^6",
     "next": "16.4.3",
+    "nodemailer": "^7.0.13",
     "pg": "^8",
+    "qrcode": "^1.5.4",
     "react": "^19",
     "react-dom": "^19",
     "server-only": "^0.0.1",
@@ -25,7 +24,9 @@
   "devDependencies": {
     "@sparticuz/chromium": "^153.0.0",
     "@types/node": "^22",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "playwright-core": "^1.64.1",
