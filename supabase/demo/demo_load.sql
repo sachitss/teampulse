@@ -4,6 +4,7 @@
 --   load:    psql -f supabase/demo/demo_load.sql
 --   remove:  psql -f supabase/demo/demo_remove.sql
 --
+-- Demo sign-in: any demo email (e.g. demo.admin@demo.invalid) with password demo-password-CHANGE-ME.
 -- Everything here is clearly labelled: names start with "[DEMO]", emails end in
 -- @demo.invalid (a domain that can never receive mail), and rows carry is_demo = true
 -- where the table has that flag. Holiday dates are EXAMPLES, not the gazetted list.
@@ -46,6 +47,12 @@ begin
                          when i = 27 then 'demo.hr@demo.invalid'
                          else 'demo.employee' || lpad(i::text, 2, '0') || '@demo.invalid' end;
   end loop;
+
+  -- Built-in sign-in: every demo account gets the password  demo-password-CHANGE-ME
+  if to_regclass('auth.credentials') is not null then
+    insert into auth.credentials (user_id, password_hash)
+    select u, crypt('demo-password-CHANGE-ME', gen_salt('bf', 10)) from unnest(ids) u;
+  end if;
 
   insert into public.teams (name, is_demo) values ('[DEMO] BIM & Engineering', true) returning id into team_dev;
   insert into public.teams (name, is_demo) values ('[DEMO] Operations', true) returning id into team_ops;

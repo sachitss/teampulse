@@ -4,7 +4,9 @@
 #   supabase/tests/run.sh            # migrations + seeds + tests
 #   supabase/tests/run.sh --no-tests # just build the database
 #
-# Needs a local PostgreSQL 15+ superuser. Set PSQL to override the command, e.g.
+# Needs a local PostgreSQL 15+ superuser and nothing else: migration 0000 (platform)
+# creates the roles and auth schema the rest of the schema expects.
+# Set PSQL to override the command, e.g.
 #   PSQL="psql -h localhost -U postgres" supabase/tests/run.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -23,7 +25,6 @@ run_sql() {   # run_sql <db> <file...>  — each file in its own transaction, st
 echo "== rebuilding $DB"
 echo "drop database if exists $DB; create database $DB;" | $PSQL -X -q -d postgres >/dev/null
 
-run_sql "$DB" tests/supabase_shim.sql
 run_sql "$DB" migrations/*.sql
 run_sql "$DB" seed/*.sql
 echo "== migrations and seeds applied"
