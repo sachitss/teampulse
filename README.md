@@ -10,6 +10,7 @@ The build follows `docs/prompts/PEACE-TeamPulse-Lite-prompt.md` and, for the Win
 |---|---|---|
 | **1. Foundation** | Database schema, Row Level Security, roles and MFA enforcement, BS calendar, rules seed, demo data | **Done, tested** (see `docs/phase-1-report.md`) |
 | **2. Time (web app)** | Installable web app for desktop and phone: sign-in with two-factor, consent, timer, timesheets with monthly lock, approvals, projects and tasks, people, settings | **Done, tested** (see `docs/phase-2-report.md`) |
+| **2b. Self-hosting** | Runs on PEACE's Synology NAS: built-in sign-in (no outside service), Docker image, compose stack with backups and Cloudflare Tunnel | **Done, tested** (see `docs/nas-guide.md`) |
 | 3. Agent | Windows agent: enrollment, policy, tray, screenshots, collectors, offline sync, plus the server endpoints it talks to | Next |
 | 4. Leave and holidays | Requests, approvals, government-list import, company holiday policy, accrual job | Database rules done in Phase 1 |
 | 5. Payroll | Calculation engine, payslips, SSF / TDS / bank exports, loan deductions, pay package screens, parallel run | Database guards, loans and pay scheme done in Phase 1 |
@@ -21,10 +22,12 @@ The build follows `docs/prompts/PEACE-TeamPulse-Lite-prompt.md` and, for the Win
 
 ```
 packages/bs-calendar/   Bikram Sambat calendar (TypeScript), shared by web, jobs and SQL seed
-supabase/migrations/    Schema and Row Level Security (apply in filename order)
-supabase/seed/          Reference data for every environment: BS calendar, leave/SSF/tax rules, checklists, compliance tasks
-supabase/demo/          Labelled demo data for dev/staging, plus one-command removal
-supabase/tests/         SQL tests that sign in as each role and exercise the real policies
+db/migrations/          Schema and Row Level Security (applied in filename order by db/manage.mjs)
+db/seed/                Reference data for every environment: BS calendar, leave/SSF/tax rules, checklists, compliance tasks
+db/demo/                Labelled demo data for trials, plus one-command removal
+db/tests/               SQL tests that sign in as each role and exercise the real policies
+db/manage.mjs           Database manager: migrate, create-admin, reset-link, reset-mfa, status
+Dockerfile, docker-compose.yml   The NAS installation (see docs/nas-guide.md)
 docs/                   Build prompts, accountant's checklist, monitoring notice template (EN + NE), phase reports
 web/                    Next.js 16 web app — installable on desktop, Android and iPhone (PWA)
 scripts/                End-to-end browser tests, notice-template generator
@@ -33,26 +36,26 @@ agent/                  Windows agent, C#/.NET 8 (Phase 3)
 
 ## The web app
 
-`web/` is a Next.js 16 app you install from the browser on Windows, macOS, Android and iPhone. See `docs/install-guide.md` for staff, and `docs/deploy-guide.md` to put it online with Supabase and Vercel.
+`web/` is a Next.js 16 app you install from the browser on Windows, macOS, Android and iPhone. See `docs/install-guide.md` for staff, and `docs/nas-guide.md` to run it on the office Synology NAS.
 
-- **Every query runs as the signed-in person.** The server opens a transaction as the Postgres role `authenticated`, carrying that person's verified Supabase claims. The Row Level Security policies, and their tests, therefore decide what each person sees, exactly as they would through Supabase's own API.
-- **Sign-in:** Supabase Auth with email and password, plus an authenticator app (TOTP) for HR and admin. New employees are added by an admin and receive an invitation email.
+- **Every query runs as the signed-in person.** The server connects with its own restricted login (`teampulse_app`) and, for each request, opens a transaction as the Postgres role `authenticated` carrying that person's id and sign-in level. The Row Level Security policies, and their tests, therefore decide what each person sees.
+- **Sign-in is built in:** email and password (bcrypt, lockout after 5 failures), plus an authenticator app (TOTP) for HR and admin, whose secrets are encrypted with `ENCRYPTION_KEY`. Sessions are random cookies stored only as hashes. New employees get a single-use invitation link, emailed over SMTP or handed over by the admin.
 - **Privacy on devices:** the service worker caches only icons and build files, never pages or data. Nothing personal is stored on a phone or laptop.
 
 Run it locally against a database built from the migrations and demo data:
 
 ```bash
-TP_TEST_DB=tp_web_dev bash supabase/tests/run.sh --no-tests
-psql -d tp_web_dev -f supabase/demo/demo_load.sql
+TP_TEST_DB=tp_web_dev bash db/tests/run.sh --no-tests
+psql -d tp_web_dev -f db/demo/demo_load.sql
 cat > web/.env.local <<ENV
 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/tp_web_dev
-TP_DEV_AUTH=1
-TP_DEV_AUTH_SECRET=$(openssl rand -hex 32)
+ENCRYPTION_KEY=$(openssl rand -base64 32)
+APP_BASE_URL=http://localhost:3000
 ENV
-cd web && npx next dev          # open http://localhost:3000/dev-login
+cd web && npx next dev          # open http://localhost:3000 — any demo email, password demo-password-CHANGE-ME
 ```
 
-`/dev-login` lets you sign in as any demo person, with or without two-factor. It exists only in development: a production build returns 404 for it and rejects its tokens, whatever the environment says.
+Demo emails: `demo.admin@demo.invalid`, `demo.hr@demo.invalid`, `demo.employee01@demo.invalid` … `demo.employee25@demo.invalid` (01 and 02 are managers). HR and admin are asked to set up an authenticator app on first sign-in.
 
 ## Run the tests
 
@@ -61,13 +64,15 @@ Requires Node 22.18+ and a local PostgreSQL 15+ you can reach as a superuser.
 ```bash
 npm install
 npm test                 # calendar + full SQL suite + web logic, on throw-away databases
-bash scripts/e2e.sh      # real browser (bundled Chromium): sign-in, consent, timer, approvals, phone layout, installability
+bash scripts/e2e.sh      # real browser (bundled Chromium): sign-in with two-factor, invitations, consent, timer, approvals, phone layout, installability
 # or separately:
 npm run test:calendar
 PSQL="psql -h localhost -U postgres" npm run test:db
 ```
 
-The SQL suite rebuilds a database from scratch every run. It uses a small shim (`supabase/tests/supabase_shim.sql`) that imitates the parts of Supabase the schema depends on: `auth.uid()`, `auth.jwt()`, the `authenticated` / `anon` / `service_role` roles, and storage tables. That lets each test sign in as an employee, manager, HR or admin, with or without MFA, and check what they can really see and change.
+On GitHub, the **Image** workflow also builds the Docker image, starts the whole `docker-compose.yml` stack, runs the browser tests against the containers, and publishes the image to `ghcr.io/sachitss/teampulse`.
+
+The SQL suite rebuilds a database from scratch every run, on plain PostgreSQL. Migration 0000 creates what the schema needs (`auth.uid()`, `auth.jwt()`, the roles), so each test can sign in as an employee, manager, HR or admin, with or without MFA, and check what they can really see and change.
 
 ## Access model (enforced in the database, not only in the UI)
 
@@ -80,8 +85,8 @@ The SQL suite rebuilds a database from scratch every run. It uses a small shim (
 | Personal record and documents | own | — | all | all |
 | Audit log | — | — | — | read only |
 
-- **HR and admin rights need MFA.** The policies check the Supabase session's `aal2` claim. An admin who signs in without MFA gets employee rights only.
-- **Evidence and files go through the server.** The agent never writes to the database directly. The server checks the device token and writes with the service role. Storage buckets are private with no user policies. Files open only through short-lived signed links, minted after `app.screenshot_key_for_view()` / `app.payslip_key_for_view()` / `app.document_key_for_view()`, which also log every view and every denied attempt.
+- **HR and admin rights need MFA.** The policies check the session's `aal2` level, which is set only after a correct authenticator code. An admin who signs in without MFA gets employee rights only.
+- **Evidence and files go through the server.** The agent never writes to the database directly. The server checks the device token and writes it. Files (from Phase 3) are stored in the NAS `files` folder, outside the web root, and open only through the server after `app.screenshot_key_for_view()` / `app.payslip_key_for_view()` / `app.document_key_for_view()`, which also log every view and every denied attempt.
 - **No monitoring without notice and consent.** The database refuses activity evidence until an admin has confirmed the notice was issued **and** that employee has consented to the latest notice version. A new notice version requires fresh consent.
 
 ## Integrity rules built into the database
@@ -97,16 +102,9 @@ The SQL suite rebuilds a database from scratch every run. It uses a small shim (
 - **Holidays follow the company's policy, not the government list directly.** The government list is a reference; the company observes, skips or moves each holiday, and adds company-only and optional days. Only an admin-approved policy that meets the legal minimum (counted separately for women) gives days off.
 - The audit log is append-only for everyone, including the database owner. Encrypted fields and personal contact details are noted by name only, never by value.
 
-## Deploying Phase 1 to Supabase
+## Installing at PEACE
 
-> Tested on PostgreSQL 16 with the shim above. **It has not yet been applied to a hosted Supabase project.** Do that on a staging project first.
-
-1. Create a Supabase project in an Asian region close to Nepal.
-2. **Authentication → enable MFA (TOTP).** Require it for every HR and admin account.
-3. Apply the schema: `supabase link --project-ref <ref>` then `supabase db push`, or run each file in `supabase/migrations/` in order in the SQL editor.
-4. Load reference data: run `supabase/seed/00_bs_calendar.sql` and `supabase/seed/01_reference_rules.sql`.
-5. Staging only: `supabase/demo/demo_load.sql`. To remove it: `supabase/demo/demo_remove.sql`. **Never load demo data in production.**
-6. Copy `.env.example` to `.env.local` for the web app (Phase 2).
+Follow `docs/nas-guide.md`: Synology Container Manager, Cloudflare Tunnel, nightly backups plus Hyper Backup off-site, and `node db/manage.mjs create-admin` for the first admin. **Never load demo data in a real installation**. `manage.mjs load-demo` refuses once real employees exist.
 
 ## The Nepali calendar
 

@@ -2,7 +2,7 @@
 
 TeamPulse is a web app you can **install**. Once installed, it opens in its own window with its own icon, like any other app. Updates arrive automatically; there is nothing to download from an app store.
 
-Open the address PEACE gave you (for example **https://teampulse.peace.com.np**) and sign in with the email invitation you received.
+Open the address PEACE gave you (for example **https://teampulse.peace.com.np**) and open the invitation link you received (by email, or from the admin). It lets you choose your password once; after that, sign in with your work email and that password.
 
 ## Windows or Mac laptop
 
@@ -45,5 +45,7 @@ HR and admin accounts must use an authenticator app, such as Google Authenticato
 |---|---|
 | No install option | Make sure you opened the **https://** address in Chrome or Edge (laptop or Android) or Safari (iPhone) |
 | "You are offline" | TeamPulse needs internet. Your data is never stored on the device |
-| Invitation link expired | Ask the admin to send a new invitation, or use **Forgot password** on the sign-in page |
+| Invitation link expired | Links work once and expire (invitation 72 hours, reset 1 hour). Ask the admin for a new one, or use **Forgot password?** on the sign-in page |
+| Too many attempts | After 5 wrong passwords the account waits 15 minutes. The admin can unlock it sooner |
+| Lost phone (two-factor) | Ask an admin to reset your two-factor; you'll set it up again at your next sign-in |
 | Code rejected (two-factor) | Make sure the time on your phone is set automatically, then try the newest code |
