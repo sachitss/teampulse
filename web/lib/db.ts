@@ -1,7 +1,7 @@
 // Database access. Every request from a signed-in person runs in a transaction
 // as the Postgres role `authenticated` with that person's JWT claims — exactly
-// what Supabase's own API does — so the Row Level Security policies in
-// supabase/migrations decide what they can see and change. Nothing in the app
+// what PostgREST-style APIs do — so the Row Level Security policies in
+// db/migrations decide what they can see and change. Nothing in the app
 // layer can widen that.
 import 'server-only';
 import pg from 'pg';

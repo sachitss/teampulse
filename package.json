@@ -9,8 +9,8 @@
   "scripts": {
     "test": "npm run test:calendar && npm run test:db && npm run test:web",
     "test:calendar": "npm test --workspace @teampulse/bs-calendar",
-    "test:db": "bash supabase/tests/run.sh",
-    "db:build": "bash supabase/tests/run.sh --no-tests",
+    "test:db": "bash db/tests/run.sh",
+    "db:build": "bash db/tests/run.sh --no-tests",
     "calendar:sql": "npm run sql --workspace @teampulse/bs-calendar",
     "test:web": "npm test --workspace @teampulse/web"
   },

@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { fileURLToPath } from 'node:url';
 
 const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
@@ -8,6 +9,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Self-contained server for the Docker image (node web/server.js); the repo root is the
+  // tracing root because the BS calendar package lives beside the web app.
+  output: 'standalone',
+  outputFileTracingRoot: fileURLToPath(new URL('..', import.meta.url)),
   // The shared BS calendar package ships TypeScript source.
   transpilePackages: ['@teampulse/bs-calendar'],
   serverExternalPackages: ['pg'],

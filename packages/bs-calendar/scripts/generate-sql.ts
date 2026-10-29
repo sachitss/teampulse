@@ -1,6 +1,6 @@
 // Emits the seed for public.bs_calendar_months from the same table the
 // TypeScript library uses, so SQL and TypeScript can never disagree.
-//   npm run sql   →  supabase/seed/00_bs_calendar.sql
+//   npm run sql   →  db/seed/00_bs_calendar.sql
 import { FIRST_BS_YEAR, LAST_BS_YEAR, monthRange, yearStatus } from '../src/index.ts';
 
 const rows: string[] = [];

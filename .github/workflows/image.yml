@@ -1,0 +1,81 @@
+name: Image
+
+# Builds the Docker image, starts the full NAS stack (database, migrations, app, backup) from
+# docker-compose.yml, runs the browser tests against it, and — on main or a version tag —
+# publishes it to ghcr.io/sachitss/teampulse for the Synology NAS to pull.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image (linux/amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: teampulse:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start the NAS stack exactly as docker-compose.yml describes
+        run: |
+          cat > .env <<EOF
+          APP_BASE_URL=http://localhost:3000
+          DB_ADMIN_PASSWORD=$(openssl rand -hex 32)
+          APP_DB_PASSWORD=$(openssl rand -hex 32)
+          ENCRYPTION_KEY=$(openssl rand -base64 32)
+          TUNNEL_TOKEN=not-used-in-ci
+          EOF
+          # CI only: use the image just built, and publish the app port so the browser can reach it.
+          cat > docker-compose.ci.yml <<'EOF'
+          services:
+            migrate: { image: teampulse:ci }
+            app: { image: teampulse:ci, ports: ['3000:3000'] }
+          EOF
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d db migrate app backup
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm migrate node db/manage.mjs load-demo
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml run --rm migrate node db/manage.mjs status
+
+      - run: npm ci
+      - name: Browser tests against the containers
+        run: E2E_EXTERNAL=1 E2E_BASE=http://localhost:3000 bash scripts/e2e.sh
+
+      - name: Migrations are repeatable, backup ran, admin console works
+        run: |
+          C="docker compose -f docker-compose.yml -f docker-compose.ci.yml"
+          $C run --rm migrate | tee /tmp/m.txt; grep -q '0 new migrations' /tmp/m.txt
+          ls backups/; ls backups/ | grep -q 'teampulse-.*\.dump$'
+          $C run --rm migrate node db/manage.mjs reset-link demo.admin@demo.invalid | grep -q '/set-password?token='
+          # The app login cannot read sign-in secrets through a person's rights.
+          $C exec -T db psql -U postgres -d teampulse -tAc "select has_table_privilege('authenticated', 'auth.credentials', 'select')" | grep -qx f
+
+      - name: Container logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml logs --tail 100
+
+      - name: Publish to GitHub Container Registry
+        if: github.event_name == 'push'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          TAGS="latest $(date -u +%Y.%m.%d) sha-${GITHUB_SHA::7}"
+          [[ "$GITHUB_REF" == refs/tags/v* ]] && TAGS="$TAGS ${GITHUB_REF#refs/tags/}"
+          for t in $TAGS; do docker tag teampulse:ci "$IMAGE:$t"; docker push "$IMAGE:$t"; done

@@ -1,0 +1,115 @@
+# TeamPulse on the Synology NAS — Container Manager → Project → Create.
+# Put this file and your filled-in .env in /volume1/docker/teampulse (see docs/nas-guide.md).
+#
+#   db           PostgreSQL 16 — the database (never reachable from outside)
+#   migrate      runs once at every start: brings the database up to date, then exits
+#   app          the TeamPulse web app (desktop, phone and tablet)
+#   backup       nightly database backup to ./backups (02:00 Nepal time), keeps 30 days
+#   cloudflared  Cloudflare Tunnel — the only way in from the internet; no router ports opened
+#
+# Nothing here publishes a port: people reach TeamPulse only through the tunnel (https).
+
+name: teampulse
+
+x-app-image: &app-image ghcr.io/sachitss/teampulse:${TEAMPULSE_VERSION:-latest}
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: teampulse
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD:?set DB_ADMIN_PASSWORD in .env}
+      TZ: UTC
+    # Sized for a DS918+ with 4 GB RAM (fine with 8 GB too).
+    command: >
+      postgres -c shared_buffers=256MB -c effective_cache_size=768MB -c work_mem=8MB
+               -c maintenance_work_mem=64MB -c max_connections=40 -c timezone=UTC
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    shm_size: 256mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d teampulse"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [internal]
+
+  migrate:
+    image: *app-image
+    restart: "no"
+    command: ["node", "db/manage.mjs", "migrate"]
+    environment:
+      DATABASE_ADMIN_URL: postgresql://postgres:${DB_ADMIN_PASSWORD}@db:5432/teampulse
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set APP_DB_PASSWORD in .env}
+      APP_BASE_URL: ${APP_BASE_URL:?set APP_BASE_URL in .env}
+    depends_on:
+      db: { condition: service_healthy }
+    networks: [internal]
+
+  app:
+    image: *app-image
+    restart: unless-stopped
+    environment:
+      # The app's own restricted login: Row Level Security applies to everything it does for a person.
+      DATABASE_URL: postgresql://teampulse_app:${APP_DB_PASSWORD}@db:5432/teampulse
+      DATABASE_POOL_MAX: "10"
+      APP_BASE_URL: ${APP_BASE_URL}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY in .env}
+      FILES_DIR: /data/files
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+    volumes:
+      - ./files:/data/files
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    mem_limit: 768m
+    networks: [internal]
+
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: postgres
+      PGPASSWORD: ${DB_ADMIN_PASSWORD}
+      PGDATABASE: teampulse
+      KEEP_DAYS: ${BACKUP_KEEP_DAYS:-30}
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      db: { condition: service_healthy }
+    # One compressed dump every night at 20:15 UTC (02:00 Nepal time), plus one at start-up.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        dump() {
+          f=/backups/teampulse-$$(date -u +%Y%m%d-%H%M).dump
+          if pg_dump -Fc -f "$$f.part"; then mv "$$f.part" "$$f"; echo "backup ok: $$f"
+          else rm -f "$$f.part"; echo "BACKUP FAILED"; fi
+          find /backups -name 'teampulse-*.dump' -mtime +$$KEEP_DAYS -delete
+        }
+        dump
+        while true; do
+          now=$$(date -u +%s); next=$$(( now / 86400 * 86400 + 72900 ))
+          [ $$next -le $$now ] && next=$$(( next + 86400 ))
+          sleep $$(( next - now )); dump
+        done
+    networks: [internal]
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?set TUNNEL_TOKEN in .env (Cloudflare Zero Trust → Networks → Tunnels)}
+    depends_on: [app]
+    networks: [internal]
+
+networks:
+  internal: {}

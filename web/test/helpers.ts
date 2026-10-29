@@ -11,10 +11,10 @@ const PSQL = process.env.PSQL ?? 'runuser -u postgres -- psql';
 export const DATABASE_URL = process.env.TP_WEB_TEST_URL ?? `postgresql://postgres:postgres@127.0.0.1:5432/${TEST_DB}`;
 
 export function buildDatabase(): void {
-  execFileSync('bash', [`${root}supabase/tests/run.sh`, '--no-tests'], {
+  execFileSync('bash', [`${root}db/tests/run.sh`, '--no-tests'], {
     env: { ...process.env, TP_TEST_DB: TEST_DB, PSQL }, stdio: 'pipe',
   });
-  execFileSync('bash', ['-c', `cat ${root}supabase/demo/demo_load.sql | ${PSQL} -X -q -v ON_ERROR_STOP=1 -d ${TEST_DB}`], { stdio: 'pipe' });
+  execFileSync('bash', ['-c', `cat ${root}db/demo/demo_load.sql | ${PSQL} -X -q -v ON_ERROR_STOP=1 -d ${TEST_DB}`], { stdio: 'pipe' });
 }
 
 let pool: pg.Pool | null = null;
@@ -52,7 +52,7 @@ export async function asSystem<T>(fn: (db: Db) => Promise<T>): Promise<T> {
   catch (e) { await c.query('rollback'); throw e; } finally { c.release(); }
 }
 
-// Demo accounts (supabase/demo/demo_load.sql)
+// Demo accounts (db/demo/demo_load.sql)
 export const DEMO = {
   admin: '00000000-0000-4000-8000-00000000d001',
   hr: '00000000-0000-4000-8000-00000000d002',

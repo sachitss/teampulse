@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Rebuilds a throw-away database from scratch and runs every SQL test.
 #
-#   supabase/tests/run.sh            # migrations + seeds + tests
-#   supabase/tests/run.sh --no-tests # just build the database
+#   db/tests/run.sh            # migrations + seeds + tests
+#   db/tests/run.sh --no-tests # just build the database
 #
 # Needs a local PostgreSQL 15+ superuser and nothing else: migration 0000 (platform)
 # creates the roles and auth schema the rest of the schema expects.
 # Set PSQL to override the command, e.g.
-#   PSQL="psql -h localhost -U postgres" supabase/tests/run.sh
+#   PSQL="psql -h localhost -U postgres" db/tests/run.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
 DB=${TP_TEST_DB:-tp_test}

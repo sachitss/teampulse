@@ -1,8 +1,8 @@
 -- =============================================================================
 -- DEMO DATA — for development and staging ONLY. Never load into production.
 --
---   load:    psql -f supabase/demo/demo_load.sql
---   remove:  psql -f supabase/demo/demo_remove.sql
+--   load:    psql -f db/demo/demo_load.sql
+--   remove:  psql -f db/demo/demo_remove.sql
 --
 -- Demo sign-in: any demo email (e.g. demo.admin@demo.invalid) with password demo-password-CHANGE-ME.
 -- Everything here is clearly labelled: names start with "[DEMO]", emails end in
@@ -33,7 +33,7 @@ begin
     return;
   end if;
 
-  -- auth users (works on plain Postgres test shim and on Supabase)
+  -- sign-in accounts (auth.users is created by migration 0000)
   -- Employees: …-0000000e0001 … 0000000e0025; admin …d001; HR …d002.
   for i in 1..27 loop ids := ids || ('00000000-0000-4000-8000-0000000e' || lpad(i::text, 4, '0'))::uuid; end loop;
   ids[26] := admin_id; ids[27] := hr_id;
@@ -138,7 +138,7 @@ begin
     from generate_series(1, 25) n;
 
   insert into public.announcements (title, body, published_at, created_by, is_demo) values
-    ('[DEMO] Welcome to TeamPulse', 'This is demo content. Remove it with supabase/demo/demo_remove.sql.', now(), hr_id, true);
+    ('[DEMO] Welcome to TeamPulse', 'This is demo content. Remove it with db/demo/demo_remove.sql.', now(), hr_id, true);
 
   raise notice 'Demo data loaded: 25 employees (2 managers), 1 admin, 1 HR.';
 end $$;

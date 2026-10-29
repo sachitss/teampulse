@@ -8,7 +8,7 @@
   "scripts": {
     "generate": "node scripts/generate-data.mjs",
     "test": "node --test test/*.test.ts",
-    "sql": "node scripts/generate-sql.ts > ../../supabase/seed/00_bs_calendar.sql"
+    "sql": "node scripts/generate-sql.ts > ../../db/seed/00_bs_calendar.sql"
   },
   "devDependencies": {
     "bikram-sambat": "1.8.1",
