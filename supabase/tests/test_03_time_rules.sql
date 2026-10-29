@@ -53,13 +53,25 @@ select tst.ok((select decided_by from time_corrections where id = :'corr') = :'m
 select tst.ok(tst.n(format('select * from time_entries where user_id = %L', :'other')) = 0, 'mgr cannot see non-report');
 reset role;
 
--- Timesheet period for the current BS month (Kathmandu).
+-- The current month can be submitted and approved but not locked until it ends.
 insert into timesheet_periods (user_id, bs_year, bs_month)
 select :'emp', split_part(app.ad_to_bs(app.kathmandu_date(now())), '-', 1)::int,
                split_part(app.ad_to_bs(app.kathmandu_date(now())), '-', 2)::int
-returning id as period, start_ad, end_ad \gset
+returning id as cur_period, start_ad, end_ad \gset
 select tst.ok(:'start_ad'::date <= app.kathmandu_date(now()) and :'end_ad'::date >= app.kathmandu_date(now()),
               'period dates filled from the BS calendar');
+update timesheet_periods set status = 'approved' where id = :'cur_period';
+select tst.fails(format('update timesheet_periods set status = %L where id = %L', 'locked', :'cur_period'), 'only be locked after it has ended');
+
+-- Last month's period (the time entries above are moved into it so the lock can be tested).
+insert into timesheet_periods (user_id, bs_year, bs_month)
+select :'emp', split_part(app.ad_to_bs(app.kathmandu_date(now()) - 35), '-', 1)::int,
+               split_part(app.ad_to_bs(app.kathmandu_date(now()) - 35), '-', 2)::int
+returning id as period, start_ad as p_start \gset
+update time_entries set started_at = started_at - interval '35 days', ended_at = ended_at - interval '35 days'
+ where user_id = :'emp' and source <> 'manual';
+update time_entries set started_at = started_at - interval '35 days', ended_at = ended_at - interval '35 days'
+ where user_id = :'emp' and source = 'manual';
 
 -- Employee can submit but not approve or lock.
 select tst.claims(:'emp', false);
@@ -82,7 +94,7 @@ reset role;
 select tst.claims(:'emp', false);
 set local role authenticated;
 select tst.fails(format('insert into time_entries (user_id, source, started_at, ended_at, reason) values (%L, %L, now() - interval %L, now() - interval %L, %L)',
-                        :'emp', 'manual', '7 hours', '6 hours', 'late add'), 'locked timesheet period');
+                        :'emp', 'manual', '36 days', '35 days 23 hours', 'late add'), 'locked timesheet period');
 reset role;
 
 -- Admin (with MFA) can unlock; it is audited.
