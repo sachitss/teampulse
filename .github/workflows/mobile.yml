@@ -54,15 +54,20 @@ jobs:
           if [ -n "$KEYSTORE_B64" ]; then
             echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
             export TP_KEYSTORE_FILE="$RUNNER_TEMP/upload.jks"
-            ./gradlew --no-daemon assembleRelease bundleRelease
+            ./gradlew --no-daemon assembleRelease bundleRelease 2>&1 | tee ../gradle.log; test ${PIPESTATUS[0]} -eq 0
             mkdir -p ../out
             cp app/build/outputs/apk/release/app-release.apk ../out/TeamPulse-$TP_VERSION_NAME.apk
             cp app/build/outputs/bundle/release/app-release.aab ../out/TeamPulse-$TP_VERSION_NAME.aab
           else
             echo "::warning::No upload key secrets — building an unsigned debug APK only."
-            ./gradlew --no-daemon assembleDebug
+            ./gradlew --no-daemon assembleDebug 2>&1 | tee ../gradle.log; test ${PIPESTATUS[0]} -eq 0
             mkdir -p ../out && cp app/build/outputs/apk/debug/app-debug.apk ../out/TeamPulse-$TP_VERSION_NAME-debug.apk
           fi
+      - name: Show the Gradle error
+        if: failure()
+        run: |
+          msg=$(grep -A25 -E "What went wrong|FAILURE:|error:" gradle.log | head -60 | sed ':a;N;$!ba;s/%/%25/g;s/\r//g;s/\n/%0A/g')
+          echo "::error title=Gradle::$msg"
       - uses: actions/upload-artifact@v4
         with:
           name: TeamPulse-android-${{ env.VERSION_NAME }}
