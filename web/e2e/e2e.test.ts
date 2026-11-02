@@ -72,15 +72,15 @@ test('admin publishes the notice; nothing is recorded until it is confirmed', as
   await page.goto(`${BASE}/settings`);
   await assert.doesNotReject(page.getByTestId('monitoring-status').getByText('Off').waitFor());
 
-  // The template still has [bracketed] placeholders: publishing is refused.
+  // A notice with [bracketed] placeholders left in is refused.
+  const enBox = page.locator('#n-en');
+  const filledEn = await enBox.inputValue();
+  await enBox.fill(`${filledEn} [fill me].`);
   await page.getByTestId('publish-notice').click();
   await page.getByRole('alert').getByText(/Fill in the \[bracketed\] parts/).waitFor();
 
-  // Fill the placeholders, then publish.
-  for (const id of ['#n-en', '#n-ne']) {
-    const v = await page.locator(id).inputValue();
-    await page.locator(id).fill(v.replace(/\[([^\]]+)\]/g, '$1'));
-  }
+  // The seeded template is already filled in (no placeholders); restore it and publish.
+  await enBox.fill(filledEn);
   await page.getByTestId('publish-notice').click();
   // Publishing takes the admin straight to the new notice: they must consent too.
   await page.waitForURL(/\/consent$/);
