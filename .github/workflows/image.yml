@@ -40,8 +40,9 @@ jobs:
           platforms: linux/amd64
           load: true
           tags: teampulse:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # No type=gha build cache: mode=max wrote every intermediate layer to the
+          # Actions cache (hundreds of MB that accumulate and fill the account's storage).
+          # The build is quick without it; npm download cache (setup-node) is enough.
 
       - name: Start the NAS stack exactly as docker-compose.yml describes
         run: |
