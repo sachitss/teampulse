@@ -2,78 +2,30 @@
 
 > **For PEACE to edit before use.** Fill in the bracketed parts. Publish it in the app as notice version 1, then confirm in Settings that it has been issued. Monitoring stays off until both are done and each employee has consented.
 >
+> This is a **short acknowledgment**. The details are explained in the team meeting; this screen only records that each person is aware and consents. Keep the meeting notes on file alongside the consents.
+>
 > The Nepali text is a **draft translation for review by a fluent reader**. Check that it matches the English exactly, because employees consent to the text they read.
 
 ---
 
 ## English
 
-**PEACE Consultancy — how we record work time and activity, and how we use your HR data**
+**PEACE Consultancy — office monitoring acknowledgment**
 
-**Why we collect this.** We record time on projects and tasks for client billing, timesheets, payroll and leave. We also keep evidence of work done on company computers. We will not use this information for any other purpose.
+PEACE Consultancy uses the TeamPulse monitoring software on company computers. During office hours it keeps a record of work activity for timesheets, payroll and work evidence. It **never** records what you type, your messages, your camera or microphone, or anything outside working time. What is recorded, who can see it, and your rights were explained in the team meeting, and you can ask [contact] about any of it at any time.
 
-**What the company laptop records, and when.** Recording happens only during a work session that you start, or within your scheduled hours of [10:00–17:00, Sunday to Friday]:
+Records are kept only as long as needed: screenshots 30 days, other activity 12 months, payroll and HR records [7] years (or as the law requires). You can see your own data in the app at any time, and no decision about you is made from monitoring data alone.
 
-- a screenshot of your screen about every 10 minutes
-- the name of the application in use (for example "Revit"), but not window titles
-- the website **domain** you visit (for example "autodesk.com"), but not full addresses or page content
-- the **number** of keyboard and mouse actions per minute; we **never** record what you type
-- idle periods, which you can mark as kept, break, or another task
-
-**What is never recorded.** Passwords, typed text, messages, your camera or microphone, files' contents, or anything outside a work session. Nothing is recorded during breaks, privacy pauses (up to 30 minutes), approved leave, or holidays. Password managers are excluded. The tray icon always shows whether recording is on.
-
-**Who can see it.**
-
-- **Activity evidence** (screenshots, apps, websites, activity counts): you, your manager, and the director/admin. HR cannot see it.
-- **Salary and payroll**: you, HR/accounts, and the admin. Managers cannot see it.
-- **Personal documents** (citizenship, PAN, contracts): you, HR, and the admin.
-- Every view of a screenshot, document or payslip is logged.
-
-**How long we keep it.**
-
-- Screenshots: 14 days.
-- Other activity: 12 months.
-- Payroll and HR records: [7] years, or as the law requires.
-
-**Your rights.** You can see your own data in the app at any time. You can ask for corrections to time records, and every change records the reason. You can ask questions about anything in this notice. Activity levels are not a measure of performance. No decision about you is made from monitoring data alone.
-
-**Contact.** [Name, role, email/phone]
-
-**Consent.** By selecting "I consent", you confirm that you have read this notice and agree to the recording described above on your company computer. If you do not consent, nothing is recorded for you; please speak to [contact].
+**Consent.** By selecting "I consent", you confirm that you are aware of the office monitoring software and agree to the recording of your work activity on company computers during office hours. If you have questions before consenting, please speak to [contact].
 
 ---
 
 ## नेपाली (समीक्षाका लागि मस्यौदा)
 
-**PEACE Consultancy — हामी कामको समय र गतिविधि कसरी रेकर्ड गर्छौं, र तपाईंको मानव संसाधन (HR) तथ्याङ्क कसरी प्रयोग गर्छौं**
+**PEACE Consultancy — कार्यालय अनुगमन स्वीकृति**
 
-**किन संकलन गर्छौं।** ग्राहक बिलिङ, टाइमसिट, तलब (पेरोल) र बिदाका लागि परियोजना र कार्यमा लागेको समय रेकर्ड गर्छौं। कम्पनीको कम्प्युटरमा गरिएको कामको प्रमाण पनि राख्छौं। यो जानकारी अन्य कुनै प्रयोजनका लागि प्रयोग गरिने छैन।
+PEACE Consultancy ले कम्पनीका कम्प्युटरहरूमा TeamPulse अनुगमन सफ्टवेयर प्रयोग गर्छ। कार्यालय समयमा यसले टाइमसिट, तलब (पेरोल) र कामको प्रमाणका लागि कामको गतिविधिको अभिलेख राख्छ। तपाईंले के टाइप गर्नुभयो, तपाईंका सन्देश, क्यामेरा वा माइक्रोफोन, वा कार्य समय बाहिरको कुनै पनि कुरा यसले **कहिल्यै** रेकर्ड गर्दैन। के रेकर्ड हुन्छ, कसले हेर्न सक्छ, र तपाईंका अधिकार के हुन् — यी सबै टोली बैठकमा बताइएको थियो, र यी मध्ये कुनै पनि विषयमा तपाईं जुनसुकै बेला [सम्पर्क व्यक्ति] सँग सोध्न सक्नुहुन्छ।
 
-**कम्पनीको ल्यापटपले के र कहिले रेकर्ड गर्छ।** तपाईंले सुरु गरेको कार्य सत्रमा, वा तपाईंको तोकिएको समय [१०:००–१७:००, आइतबारदेखि शुक्रबार] भित्र मात्र रेकर्ड हुन्छ:
+अभिलेख आवश्यक अवधिसम्म मात्र राखिन्छ: स्क्रिनसट ३० दिन, अन्य गतिविधि १२ महिना, पेरोल र HR अभिलेख [७] वर्ष (वा कानूनले तोके बमोजिम)। आफ्नो तथ्याङ्क एपमा जुनसुकै बेला हेर्न सक्नुहुन्छ, र अनुगमनको तथ्याङ्कको आधारमा मात्र तपाईंबारे कुनै निर्णय गरिँदैन।
 
-- लगभग हरेक १० मिनेटमा स्क्रिनको एउटा स्क्रिनसट
-- प्रयोग भइरहेको एप्लिकेसनको नाम (जस्तै "Revit"), तर विन्डोको शीर्षक होइन
-- तपाईंले खोलेको वेबसाइटको **डोमेन** (जस्तै "autodesk.com"), तर पूरा ठेगाना वा पृष्ठको सामग्री होइन
-- प्रति मिनेट किबोर्ड र माउसका कार्यहरूको **संख्या** मात्र; तपाईंले के टाइप गर्नुभयो त्यो **कहिल्यै** रेकर्ड गरिँदैन
-- निष्क्रिय (idle) समय, जसलाई तपाईं "राख्ने", "विश्राम" वा "अर्को काम" भनी चिन्ह लगाउन सक्नुहुन्छ
-
-**के कहिल्यै रेकर्ड गरिँदैन।** पासवर्ड, टाइप गरिएको पाठ, सन्देश, क्यामेरा वा माइक्रोफोन, फाइलहरूको सामग्री, वा कार्य सत्र बाहिरको कुनै पनि कुरा। विश्राम, गोपनीयता विराम (३० मिनेटसम्म), स्वीकृत बिदा वा बिदाको दिनमा केही पनि रेकर्ड हुँदैन। पासवर्ड म्यानेजरहरू बाहिर राखिएका छन्। रेकर्डिङ चालु छ कि छैन भनेर ट्रे आइकनले सधैं देखाउँछ।
-
-**कसले हेर्न सक्छ।**
-
-- **गतिविधिको प्रमाण** (स्क्रिनसट, एप, वेबसाइट, गतिविधि संख्या): तपाईं, तपाईंको व्यवस्थापक, र निर्देशक/एडमिन। HR ले हेर्न सक्दैन।
-- **तलब र पेरोल**: तपाईं, HR/लेखा, र एडमिन। व्यवस्थापकले हेर्न सक्दैन।
-- **व्यक्तिगत कागजात** (नागरिकता, प्यान, सम्झौता): तपाईं, HR, र एडमिन।
-- स्क्रिनसट, कागजात वा तलब विवरण (पेस्लिप) हेर्दा हरेक पटक लग राखिन्छ।
-
-**कति समय राखिन्छ।**
-
-- स्क्रिनसट: १४ दिन।
-- अन्य गतिविधि: १२ महिना।
-- पेरोल र HR अभिलेख: [७] वर्ष, वा कानूनले तोके बमोजिम।
-
-**तपाईंका अधिकार।** आफ्नो तथ्याङ्क एपमा जुनसुकै बेला हेर्न सक्नुहुन्छ। समयको अभिलेख सच्याउन अनुरोध गर्न सक्नुहुन्छ, र हरेक परिवर्तनमा कारण रेकर्ड हुन्छ। यो सूचनाको कुनै पनि विषयमा प्रश्न सोध्न सक्नुहुन्छ। गतिविधिको स्तर कार्यसम्पादनको मापन होइन। अनुगमनको तथ्याङ्कको आधारमा मात्र तपाईंबारे कुनै निर्णय गरिँदैन।
-
-**सम्पर्क।** [नाम, पद, इमेल/फोन]
-
-**सहमति।** "म सहमत छु" छान्नुभएपछि, तपाईंले यो सूचना पढ्नुभएको र आफ्नो कम्पनीको कम्प्युटरमा माथि उल्लेखित रेकर्डिङमा सहमति जनाउनुभएको पुष्टि हुन्छ। सहमति नदिनुभएमा तपाईंको कुनै पनि रेकर्ड हुँदैन; कृपया [सम्पर्क व्यक्ति] सँग कुरा गर्नुहोस्।
+**सहमति।** "म सहमत छु" छान्नुभएपछि, तपाईं कार्यालय अनुगमन सफ्टवेयरबारे जानकार हुनुहुन्छ र कार्यालय समयमा कम्पनीका कम्प्युटरहरूमा आफ्नो कामको गतिविधि रेकर्ड गर्न सहमत हुनुहुन्छ भन्ने पुष्टि हुन्छ। सहमति दिनुअघि कुनै प्रश्न भएमा कृपया [सम्पर्क व्यक्ति] सँग कुरा गर्नुहोस्।
