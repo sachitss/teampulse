@@ -41,6 +41,7 @@ services:
 
   migrate:
     image: *app-image
+    pull_policy: always   # always fetch the latest app image on Build, so a deploy is just Stop -> Build
     restart: "no"
     command: ["node", "db/manage.mjs", "migrate"]
     environment:
@@ -53,6 +54,7 @@ services:
 
   app:
     image: *app-image
+    pull_policy: always
     restart: unless-stopped
     environment:
       # The app's own restricted login: Row Level Security applies to everything it does for a person.
@@ -78,6 +80,7 @@ services:
   # opens a terminal in it; listens on no port.
   admin-tools:
     image: *app-image
+    pull_policy: always
     restart: unless-stopped
     command: ["sleep", "infinity"]
     environment:

@@ -131,7 +131,7 @@ For example onto a new or repaired NAS:
 
 When a new version is ready, it is published automatically from GitHub as `ghcr.io/sachitss/teampulse:latest`. To install it:
 
-- **Container Manager → Project → teampulse → Action → Stop**, then **Image → ghcr.io/sachitss/teampulse → Update** (or Registry → pull `latest`), then **Project → Start**. The `migrate` step updates the database by itself before the app starts.
+- **Container Manager → Project → teampulse → Action → Stop**, then **Action → Build**, then (if it does not start on its own) **Action → Start**. That is the whole update: **Stop → Build**. The app services carry `pull_policy: always`, so Build fetches the newest image before recreating the containers, and the `migrate` step brings the database up to date by itself before the app starts.
 
 To stay on a tested version, set `TEAMPULSE_VERSION=2026.10.29` (the date tag) in `.env` and change it on purpose. Take a manual Hyper Backup before larger updates.
 
