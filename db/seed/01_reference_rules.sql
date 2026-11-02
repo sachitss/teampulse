@@ -164,7 +164,7 @@ insert into public.policies (settings, note)
 select '{
   "monitoring": {
     "work_schedule": { "timezone": "Asia/Kathmandu",
-                       "windows": [ { "days": ["sun","mon","tue","wed","thu","fri"], "start": "10:00", "end": "17:00" } ] },
+                       "windows": [ { "days": ["sun","mon","tue","wed","thu","fri"], "start": "07:00", "end": "19:00" } ] },
     "session_mode": "schedule+manual",
     "screenshots": { "enabled": true, "interval_seconds": 600, "jitter_seconds": 30,
                      "image_format": "jpeg", "max_long_edge_px": 1280, "jpeg_quality": 70 },
