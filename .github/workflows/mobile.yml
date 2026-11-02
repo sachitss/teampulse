@@ -72,7 +72,7 @@ jobs:
         with:
           name: TeamPulse-android-${{ env.VERSION_NAME }}
           path: mobile/out/*
-          retention-days: 90
+          retention-days: 14
 
   ios:
     runs-on: macos-latest
