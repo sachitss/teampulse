@@ -1,5 +1,10 @@
 name: CI
 
+# One run per branch: a newer push cancels an in-progress, now-superseded run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]

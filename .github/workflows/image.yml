@@ -1,5 +1,11 @@
 name: Image
 
+# One run per branch: a newer push cancels an in-progress, now-superseded run
+# (so a quick fix-up push doesn't leave the earlier run to fail on its own).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # Builds the Docker image, starts the full NAS stack (database, migrations, app, backup) from
 # docker-compose.yml, runs the browser tests against it, and — on main or a version tag —
 # publishes it to ghcr.io/sachitss/teampulse for the Synology NAS to pull.

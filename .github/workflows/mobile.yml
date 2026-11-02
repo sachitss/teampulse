@@ -1,5 +1,10 @@
 name: Mobile apps
 
+# One run per branch: a newer push cancels an in-progress, now-superseded run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # Builds the TeamPulse app for Android and iPhone on GitHub's servers.
 #
 # Android: always builds. With the upload-key secrets it produces a signed .apk (share directly)
