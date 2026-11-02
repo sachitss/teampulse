@@ -12,12 +12,12 @@ export default function Privacy() {
       <p className="muted">Applies to the TeamPulse web app and the TeamPulse apps for iPhone and Android. Last updated 29 October 2026.</p>
 
       <h2>Who it is for</h2>
-      <p>TeamPulse is an internal tool used by PEACE Consultancy for its own staff: work time, leave, holidays,
+      <p>TeamPulse is an internal tool used by PEACE Biomedical & Engineering Consultancy Pvt. Ltd. for its own staff: work time, leave, holidays,
         payroll documents and administration. There is no public sign-up — accounts are created by the
         organisation’s administrator. If you are not an employee, the app is of no use to you and collects nothing.</p>
 
       <h2>Who is responsible</h2>
-      <p>Your employer (PEACE Consultancy) decides what is recorded and is responsible for your data. The system runs on the
+      <p>Your employer (PEACE Biomedical & Engineering Consultancy Pvt. Ltd.) decides what is recorded and is responsible for your data. The system runs on the
         organisation’s own server; no data is sold, shared with advertisers or used for tracking across other apps or websites.</p>
 
       <h2>What the phone app records</h2>

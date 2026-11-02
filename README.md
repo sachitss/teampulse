@@ -1,4 +1,4 @@
-# TeamPulse Lite + HR — PEACE Consultancy
+# TeamPulse Lite + HR — PEACE Biomedical & Engineering Consultancy Pvt. Ltd.
 
 Time and activity tracking, leave and holidays, attendance → payroll, and administration for a 25-person team in Nepal. Single organization; not a SaaS.
 

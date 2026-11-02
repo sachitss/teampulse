@@ -1,4 +1,4 @@
-# BUILD PROMPT — TEAMPULSE LITE + HR (PEACE Consultancy, 25 users, Nepal)
+# BUILD PROMPT — TEAMPULSE LITE + HR (PEACE Biomedical & Engineering Consultancy Pvt. Ltd., 25 users, Nepal)
 
 ## What this is
 
@@ -24,7 +24,7 @@ It is not a SaaS product. There is no multi-tenancy, no billing and no customer 
 
 | Item | Value |
 |---|---|
-| Organization | PEACE Consultancy (single tenant; no tenant tables) |
+| Organization | PEACE Biomedical & Engineering Consultancy Pvt. Ltd. (single tenant; no tenant tables) |
 | Users | 25 employees + up to 3 admin/HR/manager accounts |
 | Jurisdiction | **Nepal.** Labour Act 2074 + Labour Rules 2075 · Contribution-Based Social Security Act 2074 · Income Tax Act 2058 + Finance Act 2083 · Individual Privacy Act 2075 + Regulation 2077. GDPR does not apply. |
 | Calendar | **Bikram Sambat (BS) is primary** for payroll months, leave years and holidays; AD is shown alongside. Use a BS↔AD conversion library with **year-specific month-length tables** (BS month lengths vary by year; never compute them with a formula). |

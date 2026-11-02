@@ -14,7 +14,7 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
       <div className="card">
         <img className="logo-big" src="/icons/icon-192.png" alt="" />
         <h1>TeamPulse</h1>
-        <p className="muted">PEACE Consultancy</p>
+        <p className="muted">PEACE Biomedical & Engineering Consultancy Pvt. Ltd.</p>
         {done === 'password' && <p className="notice ok" role="status">Password saved. Sign in with it now.</p>}
         <ActionForm action={signInAction}>
           <div className="field">

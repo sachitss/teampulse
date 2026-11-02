@@ -1,7 +1,7 @@
 {
   "name": "teampulse",
   "private": true,
-  "description": "TeamPulse Lite + HR for PEACE Consultancy \u2014 time, activity, leave, payroll and administration for a 25-person team in Nepal.",
+  "description": "TeamPulse Lite + HR for PEACE Biomedical & Engineering Consultancy Pvt. Ltd. \u2014 time, activity, leave, payroll and administration for a 25-person team in Nepal.",
   "workspaces": [
     "packages/*",
     "web"

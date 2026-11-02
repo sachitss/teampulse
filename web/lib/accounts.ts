@@ -34,9 +34,9 @@ export async function sendSignInLink(userId: string, kind: 'invite' | 'reset', b
   const link = appUrl(`/set-password?token=${encodeURIComponent(token)}`);
   const hello = name ? `Hello ${name.replace(/^\[DEMO\]\s*/, '')},` : 'Hello,';
   const emailed = await sendMail(email,
-    kind === 'invite' ? 'Your TeamPulse account at PEACE Consultancy' : 'Reset your TeamPulse password',
+    kind === 'invite' ? 'Your TeamPulse account at PEACE Biomedical & Engineering Consultancy Pvt. Ltd.' : 'Reset your TeamPulse password',
     kind === 'invite'
-      ? `${hello}\n\nAn account has been created for you on TeamPulse, PEACE Consultancy's time, leave and payroll system.\n\n`
+      ? `${hello}\n\nAn account has been created for you on TeamPulse, PEACE Biomedical & Engineering Consultancy Pvt. Ltd.'s time, leave and payroll system.\n\n`
         + `Open this link to choose your password (valid for 72 hours, works once):\n${link}\n\n`
         + `Before anything is recorded from your computer, TeamPulse will show you the monitoring notice and ask for your consent.\n`
       : `${hello}\n\nSomeone asked to reset your TeamPulse password. Open this link to choose a new one (valid for 1 hour, works once):\n${link}\n\n`

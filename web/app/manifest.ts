@@ -4,7 +4,7 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/',
-    name: 'TeamPulse — PEACE Consultancy',
+    name: 'TeamPulse — PEACE Biomedical & Engineering Consultancy Pvt. Ltd.',
     short_name: 'TeamPulse',
     description: 'Time, tasks, leave and payslips for the PEACE team.',
     start_url: '/today',
