@@ -12,7 +12,7 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
   return (
     <div className="center-page">
       <div className="card">
-        <img className="logo-big" src="/icons/icon-192.png" alt="" />
+        <img className="logo-wordmark" src="/icons/logo.png" alt="Team Nepal Solutions" />
         <h1>TeamPulse</h1>
         <p className="muted">PEACE Biomedical & Engineering Consultancy Pvt. Ltd.</p>
         {done === 'password' && <p className="notice ok" role="status">Password saved. Sign in with it now.</p>}
@@ -30,7 +30,8 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
             <Link className="small" href="/forgot-password">Forgot password?</Link>
           </div>
         </ActionForm>
-        <p className="small muted" style={{ marginTop: 16 }}><Link href="/privacy">Privacy notice</Link></p>
+        <p className="powered-by">Powered by Ing.-Büro Sachit Shrestha</p>
+        <p className="small muted" style={{ marginTop: 4 }}><Link href="/privacy">Privacy notice</Link></p>
       </div>
     </div>
   );

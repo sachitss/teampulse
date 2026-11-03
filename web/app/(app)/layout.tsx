@@ -31,6 +31,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </p>
         )}
         {children}
+        <footer className="app-credit">Powered by Ing.-Büro Sachit Shrestha</footer>
       </main>
       <TabBar items={items} />
     </>

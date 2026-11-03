@@ -119,4 +119,7 @@ tr.leave td { background: var(--brand-soft); }
 .center-page { min-height: 100dvh; display: grid; place-items: center; padding: 16px; }
 .center-page .card { width: 100%; max-width: 420px; }
 .logo-big { width: 64px; height: 64px; border-radius: 16px; display: block; margin-bottom: 12px; }
+.logo-wordmark { width: min(260px, 85%); height: auto; display: block; margin-bottom: 12px; }
+.powered-by { font-size: 0.8125rem; color: var(--muted); margin-top: 16px; }
+.app-credit { text-align: center; color: var(--muted); font-size: 0.75rem; margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line); }
 .notice-text { white-space: pre-wrap; max-height: 50vh; overflow: auto; border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--bg); }
