@@ -11,10 +11,13 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
   const { done } = await searchParams;
   return (
     <div className="center-page">
-      <div className="card">
-        <img className="logo-wordmark" src="/icons/logo.png" alt="Team Nepal Solutions" />
-        <h1>TeamPulse</h1>
-        <p className="muted">PEACE Biomedical & Engineering Consultancy Pvt. Ltd.</p>
+      <div className="card auth-card">
+        <div className="auth-head">
+          <img className="logo-wordmark" src="/icons/logo.png" alt="Team Nepal Solutions" />
+          <h1>TeamPulse</h1>
+          <p className="muted">PEACE Biomedical & Engineering Consultancy Pvt. Ltd.</p>
+        </div>
+        <div className="auth-body">
         {done === 'password' && <p className="notice ok" role="status">Password saved. Sign in with it now.</p>}
         <ActionForm action={signInAction}>
           <div className="field">
@@ -32,6 +35,7 @@ export default async function SignIn({ searchParams }: { searchParams: Promise<{
         </ActionForm>
         <p className="powered-by">Powered by Ing.-Büro Sachit Shrestha</p>
         <p className="small muted" style={{ marginTop: 4 }}><Link href="/privacy">Privacy notice</Link></p>
+        </div>
       </div>
     </div>
   );
